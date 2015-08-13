@@ -1,6 +1,6 @@
 # 자바8 Concurrency 튜토리얼: Thread/Executor
 
-이 글은 [Benjamin Winterberg](http://winterbe.com/about/)가 작성한 Java 8 Concurrency Tutorial: Threads and Executors을 번역한 글입니다. 저자의 허락을 얻어 번역하여 공개합니다.
+이 글은 [Benjamin Winterberg](http://winterbe.com/about/)가 작성한 [Java 8 Concurrency Tutorial](http://winterbe.com/posts/2015/04/07/java8-concurrency-tutorial-thread-executor-examples/)을 번역한 글입니다. 저자의 허락을 얻어 번역하여 공개합니다.
 
 ***
 
