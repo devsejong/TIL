@@ -189,6 +189,14 @@ In addition to `Runnable` executors support another kind of task named `Callable
 
 This lambda expression defines a callable returning an integer after sleeping for one second:
 
+## Callable / Futures
+
+Executor는 `Runnable`에 더해 `Callable`을 사용하여 task를 만들 수 있습니다. `Callable`은 `Runnalbe`과 마찬가지로 functional interface이지만, 반환값을 가지고 있다는 차이점이 있습니다.
+
+아래의 예제에서는 람다표현식을 통해서, 1초간 정지한 다음 Integer값을 반환하는 예제입니다.
+
+* * *
+
 	Callable<Integer> task = () -> {
 	    try {
 	        TimeUnit.SECONDS.sleep(1);
@@ -200,6 +208,12 @@ This lambda expression defines a callable returning an integer after sleeping fo
 	};
 
 Callables can be submitted to executor services just like runnables. But what about the callables result? Since `submit()` doesn't wait until the task completes, the executor service cannot return the result of the callable directly. Instead the executor returns a special result of type `Future` which can be used to retrieve the actual result at a later point in time.
+
+
+//TODO 아래 문장은 더 다듬어야 함.
+`Callable`은  `Runnalbe`과 마찬가지로 작업을 실행시킬 수 있습니다. 하지만 결과는 어떻게 받아올 수 있을까요?? `ExecutorService`의 `submit()`은 사용할 경우에 작업이 끝나는 것을 기다리지 않으며, `ExecutorService`은 callable의 결과를 바로 가져오지 않습니다. 대신에 `Future`라는 특별한 타입의 값을 반환합니다. `Future`는 실제 결과를 원하는 시간에 가져올 수 있도록 제공합니다.
+
+* * *
 
 	ExecutorService executor = Executors.newFixedThreadPool(1);
 	Future<Integer> future = executor.submit(task);
@@ -213,7 +227,15 @@ Callables can be submitted to executor services just like runnables. But what ab
 
 After submitting the callable to the executor we first check if the future has already been finished execution via `isDone()`. I'm pretty sure this isn't the case since the above callable sleeps for one second before returning the integer.
 
+`Callable`을 `submit()`을 활용하여 작업을 실행시킨 후 작업이 종료되었는지 여부는 `isDone()`메서드를 통해서 확인할 수 있습니다. 이전 코드에서 우리가 만든 `Callable`에서는 1초간 sleep을 걸어놓았기에, 처음의 `isDone()`이 호출되는 시점에서는 작업이 진행중인 상태일 것이라고 예상할 수 있을 것 입니다.
+
+***
+
 Calling the method `get()` blocks the current thread and waits until the callable completes before returning the actual result `123`. Now the future is finally done and we see the following result on the console:
+
+
+
+***
 
 	future done? false
 	future done? true
