@@ -333,11 +333,15 @@ In this example we utilize Java 8 functional streams in order to process all fut
 
 Another way of batch-submitting callables is the method `invokeAny()` which works slightly different to `invokeAll()`. Instead of returning future objects this method blocks until the first callable terminates and returns the result of that callable.
 
+`Callable`을 실행할 수 있는 다른 방법은 `invokeAny()`를 사용하는 것입니다. Future의 컬렉션이 반환되는 `invokeAll()`과는 달리 이 메서드는 작업 중 하나의 값이 완료될 때 까지 기다린 뒤 결과를 반환하고, 다른 작업을 종료시킵니다.
+
 ***
 
-// 여기까지 진행했어요!!
-
 In order to test this behavior we use this helper method to simulate callables with different durations. The method returns a callable that sleeps for a certain amount of time until returning the given result:
+
+위의 동작을 테스트해보기 위해서 callable의 실행시간을 다르게 설정할 수 있도록 만들었습니다. callable을 호출할 경우 지정된 시간 동안 멈춘 뒤 결과를 반환하도록 코드를 작성하였습니다.
+
+***
 
 	Callable<String> callable(String result, long sleepSeconds) {
     return () -> {
@@ -346,7 +350,11 @@ In order to test this behavior we use this helper method to simulate callables w
     };
 }
 
-We use this method to create a bunch of callables with different durations from one to three seconds. Submitting those callables to an executor via invokeAny() returns the string result of the fastest callable - in that case task2:
+We use this method to create a bunch of callables with different durations from one to three seconds. Submitting those callables to an executor via `invokeAny()` returns the string result of the fastest callable - in that case task2:
+
+위에서 만든 callable을 활용하여 1초부터 3초까지 각기 다른 시간이 걸리도록 설정하였습니다. `Executor`에서 `invokeAny()`를 통해서 실행될 경우 가장 빠른 실행결과가 나오게 됩니다. 아래의 경우에서는 `task2`가 출력됩니다.
+
+***
 
 	ExecutorService executor = Executors.newWorkStealingPool();
 
@@ -359,17 +367,40 @@ We use this method to create a bunch of callables with different durations from 
 	System.out.println(result);
 
 	// => task2
-The above example uses yet another type of executor created via newWorkStealingPool(). This factory method is part of Java 8 and returns an executor of type ForkJoinPool which works slightly different than normal executors. Instead of using a fixed size thread-pool ForkJoinPools are created for a given parallelism size which per default is the number of available cores of the hosts CPU.
+
+The above example uses yet another type of executor created via `newWorkStealingPool()`. This factory method is part of Java 8 and returns an executor of type `ForkJoinPool` which works slightly different than normal executors. Instead of using a fixed size thread-pool ForkJoinPools are created for a given parallelism size which per default is the number of available cores of the hosts CPU.
+
+위의 예제에서는 `newWorkStealingPool()`를 사용하여 `Executor`를 생성하고 있습니다. 이 팩터리 메서드는 자바8에서부터 지원되며, `ForkJoinPool`을 Executor 타입으로 반환합니다. 기존의 고정된 쓰래드풀을 지정하는 것과는 다르게 [`ForkJoinPool`](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ForkJoinPool.html)은 프로그램을 실행하는 CPU 코어의 숫자를 기준으로 쓰래드 풀을 생성합니다.
+
+***
 
 ForkJoinPools exist since Java 7 and will be covered in detail in a later tutorial of this series. Let's finish this tutorial by taking a deeper look at scheduled executors.
+
+`ForkJoinPool`은 자바7에서 추가되었어며, 더욱 자세한 이야기는 이어지는 튜토리얼에서 자세하게 설명하도록 하겠습니다. 이제 이 튜토리얼의 마지막인 `Scheduled Executor`에 대해서 알아보도록 합시다.(역자 주 : 이 부분에 대해서는 추가로 공부한 후 다시 수정하겠습니다.)
+
+***
 
 ## Scheduled Executors
 
 We've already learned how to submit and run tasks once on an executor. In order to periodically run common tasks multiple times, we can utilize scheduled thread pools.
 
-A ScheduledExecutorService is capable of scheduling tasks to run either periodically or once after a certain amount of time has elapsed.
+## ScheduledExecutor
+
+지금까지는 `Executor`를 활용하여 일회성 작업들을 어떻게 만들고 실행하는지에 대해서 이야기했습니다. 만약 주기적으로 여러번 실행되어야 하는 작업이 필요하다면  scheduled 쓰래드풀을 통해서 작업할 수 있습니다.
+
+***
+
+A `ScheduledExecutorService` is capable of scheduling tasks to run either periodically or once after a certain amount of time has elapsed.
+
+`ScheduledExecutorService`을 사용하면, 주기적으로 또는 작업이 끝난뒤 일정시간 후 다시 작업을 하는등의 스케쥴링 설정이 가능합니다.
+
+***
 
 This code sample schedules a task to run after an initial delay of three seconds has passed:
+
+아래의 예제에서는 3초마다 작업을 실행합니다.
+
+***
 
 	ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
 
@@ -382,6 +413,10 @@ This code sample schedules a task to run after an initial delay of three seconds
 	System.out.printf("Remaining Delay: %sms", remainingDelay);
 
 Scheduling a task produces a specialized future of type ScheduledFuture which - in addition to Future - provides the method getDelay() to retrieve the remaining delay. After this delay has elapsed the task will be executed concurrently.
+
+
+
+***
 
 In order to schedule tasks to be executed periodically, executors provide the two methods scheduleAtFixedRate() and scheduleWithFixedDelay(). The first method is capable of executing tasks with a fixed time rate, e.g. once every second as demonstrated in this example:
 
