@@ -229,6 +229,8 @@ The interface `ReadWriteLock` specifies another type of lock maintaining a pair 
 
 ### ReadWriteLock
 
+`ReadWriteLock` 인터페이스는 읽기 엑세스와 쓰기 엑세스 한 쌍의 락을 관리할 수 있는 기능을 가지고 있습니다. 공유변수에 쓰기 작업이 없을 경우, 기본적으로 변수를 읽는 것은 안전할 것이라는 개념이 이 인터페이스에 나타나 있습니다. 쓰기락이 사용되지 않는 경우, 읽기 락은 동시에 적용될 수 있을것 입니다. 쓰기작업보다 읽기작업이 많이 사용되는 경우, 이 락을 사용할 경우 성능과 처리량을 향상시킬 수 있을 것 입니다.
+
 ***
 
 	ExecutorService executor = Executors.newFixedThreadPool(2);
@@ -247,6 +249,10 @@ The interface `ReadWriteLock` specifies another type of lock maintaining a pair 
 
 The above example first acquires a write-lock in order to put a new value to the map after sleeping for one second. Before this task has finished two other tasks are being submitted trying to read the entry from the map and sleep for one second:
 
+위의 예제에서는 우선 쓰기 락의 건 다음 1초간 일시정지, 그 다음 Map에 새로운 값을 추가합니다. 아래의 코드에서는 쓰기 작업이 끝나기 전에 읽기작업을 실행하고 1초간 정지하도록 코드를 작성하였습니다.
+
+***
+
 	Runnable readTask = () -> {
 	    lock.readLock().lock();
 	    try {
@@ -264,11 +270,23 @@ The above example first acquires a write-lock in order to put a new value to the
 
 When you execute this code sample you'll notice that both read tasks have to wait the whole second until the write task has finished. After the write lock has been released both read tasks are executed in parallel and print the result simultaneously to the console. They don't have to wait for each other to finish because read-locks can safely be acquired concurrently as long as no write-lock is held by another thread.
 
+코드를 실행할 경우 두 읽기작업의 경우 쓰기작업이 종료될 때 까지 기다리는 것을 확인할 수 있을 것입니다. 쓰기작업이 끝날경우, 읽기작업은 동시에 실행되어 결과가 출력되는 것을 콘솔에서 확인할 수 있을 것 입니다. 읽기작업은 쓰기작업이 다른스레드에서 진행되지 않을 경우에 병렬로 사용할 수 있으므로, 두개의 읽기작업은 동시에 실행되는것 입니다.
+
+***
+
 ### StampedLock
 
 Java 8 ships with a new kind of lock called `StampedLock` which also support read and write locks just like in the example above. In contrast to `ReadWriteLock` the locking methods of a `StampedLock` return a stamp represented by a `long` value. You can use these stamps to either release a lock or to check if the lock is still valid. Additionally stamped locks support another lock mode called optimistic locking.
 
+자바8에서는 `StampedLock`이라는 새로운 락이 추가되었씁니다. 이는 위의 `ReadWriteLock`과 동일한 개념을 가지고 있으나, 락의 여부인 stamp를 `long` 값으로 반환합니다. 이 stamp 값을 사용하여 현재 락의 상태와 락이 걸렸는지 여부를 확인할 수 있습니다. 추가적으로 `StampedLock`은 다른 낙관적 락이 가능하도록 지원하여 줍니다.
+
+***
+
 Let's rewrite the last example code to use `StampedLock` instead of `ReadWriteLock`:
+
+아래는 이전 예제코드를 `StampedLock`을 사용하여 변경한 예시입니다.
+
+***
 
 	ExecutorService executor = Executors.newFixedThreadPool(2);
 	Map<String, String> map = new HashMap<>();
@@ -301,9 +319,21 @@ Let's rewrite the last example code to use `StampedLock` instead of `ReadWriteLo
 
 Obtaining a read or write lock via `readLock()` or `writeLock()` returns a stamp which is later used for unlocking within the finally block. Keep in mind that stamped locks don't implement reentrant characteristics. Each call to lock returns a new stamp and blocks if no lock is available even if the same thread already holds a lock. So you have to pay particular attention not to run into deadlocks.
 
+ `readLock()`메서드와 `writeLock()`메서드를 사용하여 얻은 stamp값은 `finally`블록에서 락을 해제할 때 사용됩니다. `StampedLock`은 다른 락과는 다르게 Reentrant특성을 가지고 있지 않다는 점을 기억하여야 합니다. 동일한 스레드며 이미 락이 호출되었더라도 매번 호출될 때 마다 새로운 stamp값을 반환합니다. 그러므로 `StampedLock`을 사용할 때에는 데드락과 같은 상황에 빠지지 않도록 특별에 주의하여야 합니다.
+
+***
+
 Just like in the previous `ReadWriteLock` example both read tasks have to wait until the write lock has been released. Then both read tasks print to the console simultaneously because multiple reads doesn't block each other as long as no write-lock is held.
 
+이전의 `ReadWriteLock`과 마찬가지로 쓰기락이 걸려있는 상태일 경우 락이 풀릴때 까지 읽기작업은 일시정지 상태가 됩니다. 읽기작업은 쓰기락이 걸려있지 않을경우에 동시에 실행할 수 있습니다.
+
+***
+
 The next example demonstrates *optimistic locking*:
+
+아래는 *낙관적 락(optimistic lock)*에 대한 예제코드입니다.
+
+***
 
 	ExecutorService executor = Executors.newFixedThreadPool(2);
 	StampedLock lock = new StampedLock();
@@ -336,7 +366,15 @@ The next example demonstrates *optimistic locking*:
 
 An optimistic read lock is acquired by calling `tryOptimisticRead()` which always returns a stamp without blocking the current thread, no matter if the lock is actually available. If there's already a write lock active the returned stamp equals zero. You can always check if a stamp is valid by calling `lock.validate(stamp)`.
 
+낙관적 읽기락의 stamp `tryOptimisticRead()`을 사용하여 얻어올 수 있습니다. 현재 스레드가 락이 걸렸는지, 사용 가능한지와 상관없이 stamp 값을 리턴합니다. 만약 쓰기락이 걸려있는 상태라면 stamp값은 0을 반환합니다. lock이 가능한지 여부는 `lock.validate(stamp)`를 호출하여 언제나 확인할 수 있습니다.
+
+***
+
 Executing the above code results in the following output:
+
+위의 코드를 실행하려 경우 아래와 같은 결과가 반환됩니다.
+
+***
 
 	Optimistic Lock Valid: true
 	Write Lock acquired
@@ -346,7 +384,15 @@ Executing the above code results in the following output:
 
 The optimistic lock is valid right after acquiring the lock. In contrast to normal read locks an optimistic lock doesn't prevent other threads to obtain a write lock instantaneously. After sending the first thread to sleep for one second the second thread obtains a write lock without waiting for the optimistic read lock to be released. From this point the optimistic read lock is no longer valid. Even when the write lock is released the optimistic read locks stays invalid.
 
+// 머리가 복잡하다 해석이 안됭.. ㅇㅅㅇ
+
+***
+
 So when working with optimistic locks you have to validate the lock every time after accessing any shared mutable variable to make sure the read was still valid.
+
+그러므로 만약 낙관적 락과 함께 작업을 할경우 매번 공유변수에 접근할 때 마다 읽기작업이 가능한지 확인해보아야 합니다.
+
+***
 
 Sometimes it's useful to convert a read lock into a write lock without unlocking and locking again. `StampedLock` provides the method `tryConvertToWriteLock()` for that purpose as seen in the next sample:
 
