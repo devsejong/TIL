@@ -2,21 +2,46 @@
 
 Welcome to the second part of my Java 8 Concurrency Tutorial out of a series of guides teaching multi-threaded programming in Java 8 with easily understood code examples. In the next 15 min you learn how to synchronize access to mutable shared variables via the synchronized keyword, locks and semaphores.
 
+병렬 프로그래밍 튜토리얼의 두번째 파트에 오신것을 환영합니다. 이 튜토리얼는 자바8을 기반으로 한 예제코드를 통해서 쉬운 이해를 돕는걸 목표로 합니다. 앞으로 15분간 synchronized 키워드, Lock, Semaphore 를 활용하여 공유변수를 안전하게 엑세스할 수 있는 방법을 이야기할 것 입니다.
 
+***
 
 - Part 1: [Threads and Executors](http://winterbe.com/posts/2015/04/07/java8-concurrency-tutorial-thread-executor-examples/)
 - Part 2: Synchronization and Locks
 - Part 3: [Atomic Variables and ConcurrentMap](http://winterbe.com/posts/2015/05/22/java8-concurrency-tutorial-atomic-concurrent-map-examples/)
 
+
+- 파트 1: [Thread/Executor](http://devsejong.tumblr.com/post/126596600092/자바8-concurrency-튜토리얼-threadexecutor)
+- 파트 2: Synchronize/Lock
+- 파트 3: Atomic Variables/ConcurrentMap
+
+***
+
 The majority of concepts shown in this article also work in older versions of Java. However the code samples focus on Java 8 and make heavy use of lambda expressions and new concurrency features. If you're not yet familiar with lambdas I recommend reading my [Java 8 Tutorial](http://winterbe.com/posts/2014/03/16/java-8-tutorial/) first.
 
+앞으로 이야기할 내용의 주요 개념들은 오래된 자바에서도 동일하게 사용할 수 있으나, 이 튜토리얼은 자바8을 기준으로 코드를 작성하였습니다. 람다 표현식과 같이 자바8에 소개된 새로운 문법을 많이 사용하였으므로 문법에 친숙하지 않을 경우 우선 람다에 대한 [튜토리얼](http://winterbe.com/posts/2014/03/16/java-8-tutorial/) 먼저 참조하시기 바랍니다.
+
+***
+
 For simplicity the code samples of this tutorial make use of the two helper methods `sleep(seconds)` and `stop(executor)` as defined [here](https://github.com/winterbe/java8-tutorial/blob/master/src/com/winterbe/java8/samples/concurrent/ConcurrentUtils.java).
+
+앞으로 나올 예제코드를 단순하게 작성할 수 있도록 두개의 메서드 `sleep(seconds)`과 `stop(executor)`을 정의합니다. 이 메서드는 [여기](https://github.com/winterbe/java8-tutorial/blob/master/src/com/winterbe/java8/samples/concurrent/ConcurrentUtils.java)에서 찾아볼 수 있습니다.
+
+***
 
 ## Synchronized
 
 In the [previous tutorial](http://winterbe.com/posts/2015/04/30/java8-concurrency-tutorial-synchronized-locks-examples/) we've learned how to execute code in parallel via executor services. When writing such multi-threaded code you have to pay particular attention when accessing shared mutable variables concurrently from multiple threads. Let's just say we want to increment an integer which is accessible simultaneously from multiple threads.
 
+[이전 튜토리얼](http://devsejong.tumblr.com/post/126596600092/자바8-concurrency-튜토리얼-threadexecutor)에서는 Executor Service를 어떻게 만들고 실행하는지에 대해서 이야기하였습니다. 이러한 멀티 스레드에서는 공유 변수에 접근할 때 각별이 주의를 기울여야 합니다. 멀티 스레드를 활용하여 integer값을 동시에 증가시키는 것에 대해서 이야기해 봅시다.
+
+***
+
 We define a field `count` with a method `increment()` to increase count by one:
+
+아래와 같이 필드 `count`와, 1씩 `count`를 증가시키는 메서드 `increment()`를 정의하였습니다.
+
+***
 
 	int count = 0;
 
@@ -25,6 +50,10 @@ We define a field `count` with a method `increment()` to increase count by one:
 	}
 	
 When calling this method concurrently from multiple threads we're in serious trouble:
+
+이 메서드를 멀티 스레드 환경에서 병렬로 호출할 경우 심각한 문제가 생깁니다.
+
+***
 
 	ExecutorService executor = Executors.newFixedThreadPool(2);
 
@@ -37,15 +66,33 @@ When calling this method concurrently from multiple threads we're in serious tro
 
 Instead of seeing a constant result count of 10000 the actual result varies with every execution of the above code. The reason is that we share a mutable variable upon different threads without synchronizing the access to this variable which results in a [race condition](http://en.wikipedia.org/wiki/Race_condition).
 
+// 다듬기 필요.
+
+위 코드를 실행할 경우 10000번의 카운트가 진행되지만, 실제 출력되는 값은 예상했던 것과는 다릅니다. 그 서로 다른 스레드가 공유변수에 대해서 동기화되지 않은채 접근하기 때문입니다. 이러한 현상을 경쟁상태([race condition](https://ko.wikipedia.org/wiki/경쟁_상태))라고 부릅니다.
+
+***
+
 Three steps have to be performed in order to increment the number: (i) read the current value, (ii) increase this value by one and (iii) write the new value to the variable. If two threads perform these steps in parallel it's possible that both threads perform step 1 simultaneously thus reading the same current value. This results in lost writes so the actual result is lower. In the above sample 35 increments got lost due to concurrent unsynchronized access to count but you may see different results when executing the code by yourself.
 
+위의 코드에서 숫자를 1씩 더하는 로직은 3번의 과정을 통해 이루어집니다. (1)현재의 값을 읽는다. (2)읽은값의 숫자에 1을 더한다. (3)결과를 변수에 설정한다. 두 스레드가 (1)의 과정에서 동시에 읽는 과정에서 같은 값을 가져올 가능성이 있습니다. 그렇기 때문에 실행결과 값으로 10000보다 작은 숫자가 나오는 것입니다. 위 코드에서는 35만큼이 동기화되지 않은 접근 때문에 누락되었습니다.
+
+***
+
 Luckily Java supports thread-synchronization since the early days via the `synchronized` keyword. We can utilize synchronized to fix the above race conditions when incrementing the count:
+
+다행스럽게도 자바에서는 `synchronized` 키워드를 지원하여 스레드 환경에서 동기화된 접근이 가능합니다. 1씩 값을 증가시키는 위의 경쟁상태 코드를 고쳐보도록 하겠습니다.
+
+***
 
 	synchronized void incrementSync() {
 	    count = count + 1;
 	}
 
 When using `incrementSync()` concurrently we get the desired result count of 10000. No race conditions occur any longer and the result is stable with every execution of the code:
+
+이제 `incrementSync()`를 병렬로 사용하더라도 우리가 예상했던 결과값 10000을 얻을 수 있습니다. 매번 실행을 하더라도 더이상 경쟁상태로 인한 문제가 생기지 않는 것을 확인할 수 있습니다.
+
+***
 
 	ExecutorService executor = Executors.newFixedThreadPool(2);
 
@@ -58,6 +105,10 @@ When using `incrementSync()` concurrently we get the desired result count of 100
 
 The `synchronized` keyword is also available as a block statement.
 
+`synchroized` 키워드는 코드 블록에서도 직접 사용할 수 있습니다.
+
+***
+
 	void incrementSync() {
 	    synchronized (this) {
 	        count = count + 1;
@@ -66,13 +117,36 @@ The `synchronized` keyword is also available as a block statement.
 
 Internally Java uses a so called [monitor also known as monitor lock](https://docs.oracle.com/javase/tutorial/essential/concurrency/locksync.html) or intrinsic lock in order to manage synchronization. This monitor is bound to an object, e.g. when using synchronized methods each method share the same monitor of the corresponding object.
 
+
+//다듬기 필요.
+
+자바는 내부적으로 [Monitor(Monitor lock)](https://docs.oracle.com/javase/tutorial/essential/concurrency/locksync.html) 과 intrinsic Lock을 동기처리를 위해서 사용합니다. Monitor는 객체와 결합되는데 synchronized 메서드를 호출할 경우 동일한 모니터를 공유합니다.
+
+***
+
 All implicit monitors implement the reentrant characteristics. Reentrant means that locks are bound to the current thread. A thread can safely acquire the same lock multiple times without running into deadlocks (e.g. a synchronized method calls another synchronized method on the same object).
+
+
+//이건 진짜 해석 못하겠다..
+모든 implicit monitors 요각의 특성을 내포합니다. Reentrant는 현재 스레드에 한해서 Lock이 접합되는 것을 이야기합니다. 스레드에서는 동일한 Lock을 데드락에 빠지는 일 없이 안전하게 가져올 수 있습니다. 동일한 객체에서 synchronized메서드는 다른 synchronized 메서드를 부를 수 있습니다.
+
+***
 
 ## Locks
 
 Instead of using implicit locking via the `synchronized` keyword the Concurrency API supports various explicit locks specified by the `Lock` interface. Locks support various methods for finer grained lock control thus are more expressive than implicit monitors.
 
+## Lock
+
+`synchronized` 키워드를 사용하는 대신에 Concurrency API 에서 지원하는 다양한 `Lock` 인터페이스를 활용할 수 있습니다. Lock은 잘개 쪼개진 다양한 메서드를 제공합니다. implicit monitor에 비해서는 비용이 비싸다고 볼 수도 있습니다.
+
+***
+
 Multiple lock implementations are available in the standard JDK which will be demonstrated in the following sections.
+
+다양한 Lock은 표준 JDK에서 사용할 수 있습니다. 앞으로 나올 섹션에서 더욱 자세하게 이야기해 나가도록 하겠습니다.
+
+***
 
 ### ReentrantLock
 
