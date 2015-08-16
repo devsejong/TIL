@@ -66,15 +66,13 @@ When calling this method concurrently from multiple threads we're in serious tro
 
 Instead of seeing a constant result count of 10000 the actual result varies with every execution of the above code. The reason is that we share a mutable variable upon different threads without synchronizing the access to this variable which results in a [race condition](http://en.wikipedia.org/wiki/Race_condition).
 
-// 다듬기 필요.
-
-위 코드를 실행할 경우 10000번의 카운트가 진행되지만, 실제 출력되는 값은 예상했던 것과는 다릅니다. 그 서로 다른 스레드가 공유변수에 대해서 동기화되지 않은채 접근하기 때문입니다. 이러한 현상을 경쟁상태([race condition](https://ko.wikipedia.org/wiki/경쟁_상태))라고 부릅니다.
+위의 코드를 실행할 경우 10000이 아니라 매번 다른 값이 출력되는 것을 보게 될 것입니다. 이는 서로 다른 스레드가 공유변수에 동기화되지 않은채로 접근하기 때문입니다. 이러한 상태를 경쟁상태([race condition](https://ko.wikipedia.org/wiki/경쟁_상태))라고 부릅니다.
 
 ***
 
 Three steps have to be performed in order to increment the number: (i) read the current value, (ii) increase this value by one and (iii) write the new value to the variable. If two threads perform these steps in parallel it's possible that both threads perform step 1 simultaneously thus reading the same current value. This results in lost writes so the actual result is lower. In the above sample 35 increments got lost due to concurrent unsynchronized access to count but you may see different results when executing the code by yourself.
 
-위의 코드에서 숫자를 1씩 더하는 로직은 3번의 과정을 통해 이루어집니다. (1)현재의 값을 읽는다. (2)읽은값의 숫자에 1을 더한다. (3)결과를 변수에 설정한다. 두 스레드가 (1)의 과정에서 동시에 읽는 과정에서 같은 값을 가져올 가능성이 있습니다. 그렇기 때문에 실행결과 값으로 10000보다 작은 숫자가 나오는 것입니다. 위 코드에서는 35만큼이 동기화되지 않은 접근 때문에 누락되었습니다.
+위의 코드에서 숫자를 1씩 더하는 로직은 3번의 다음과 같은 과정을 거칩니다. (1)현재의 값을 읽는다. (2)읽은값의 숫자에 1을 더한다. (3)결과를 변수에 설정한다. 두 스레드가 (1)의 과정에서 동시에 읽는 과정에서 같은 값을 가져올 가능성이 있습니다. 그렇기 때문에 실행결과 값으로 10000보다 작은 숫자가 나오는 것입니다. 위 코드에서는 35만큼이 동기화되지 않은 접근 때문에 누락되었습니다.
 
 ***
 
@@ -117,10 +115,9 @@ The `synchronized` keyword is also available as a block statement.
 
 Internally Java uses a so called [monitor also known as monitor lock](https://docs.oracle.com/javase/tutorial/essential/concurrency/locksync.html) or intrinsic lock in order to manage synchronization. This monitor is bound to an object, e.g. when using synchronized methods each method share the same monitor of the corresponding object.
 
+//내가 이해를 못하고 있음.
 
-//다듬기 필요.
-
-자바는 내부적으로 [Monitor(Monitor lock)](https://docs.oracle.com/javase/tutorial/essential/concurrency/locksync.html) 과 intrinsic Lock을 동기처리를 위해서 사용합니다. Monitor는 객체와 결합되는데 synchronized 메서드를 호출할 경우 동일한 모니터를 공유합니다.
+자바는 내부적으로 [Monitor(Monitor Lock 이하 모니터)](https://docs.oracle.com/javase/tutorial/essential/concurrency/locksync.html)와 암묵적인 Lock을 동기처리를 위해서 사용합니다. 모니터는 객체와 결합됩니다. 다시 말해서 synchronized 메서드가 호출될 경우 해당 객체의 동일한 모니터을 공유하게 됩니다.
 
 ***
 
@@ -128,7 +125,9 @@ All implicit monitors implement the reentrant characteristics. Reentrant means t
 
 
 //이건 진짜 해석 못하겠다..
-모든 implicit monitors 요각의 특성을 내포합니다. Reentrant는 현재 스레드에 한해서 Lock이 접합되는 것을 이야기합니다. 스레드에서는 동일한 Lock을 데드락에 빠지는 일 없이 안전하게 가져올 수 있습니다. 동일한 객체에서 synchronized메서드는 다른 synchronized 메서드를 부를 수 있습니다.
+모든 명시적 모니터락은 Reentrant(재진입가능)한 가능하다는 특성을 가지고 있습니다. Reentrant하다는 것은 현재 스레드에 Lock이 결합되었다라는 뜻입니다. 스레드에서는 동일한 Lock을 데드락에 빠지는 일 없이 안전하게 가져올 수 있습니다. 동일한 객체에서 synchronized메서드는 다른 synchronized 메서드를 부를 수 있습니다.
+
+(역자주 : Reentrant는 재진입이 가능한으로 해석이 가능하지만, 조금 더 많이 사용되는 영어단어를 사용합니다.
 
 ***
 
@@ -138,7 +137,7 @@ Instead of using implicit locking via the `synchronized` keyword the Concurrency
 
 ## Lock
 
-`synchronized` 키워드를 사용하는 대신에 Concurrency API 에서 지원하는 다양한 `Lock` 인터페이스를 활용할 수 있습니다. Lock은 잘개 쪼개진 다양한 메서드를 제공합니다. implicit monitor에 비해서는 비용이 비싸다고 볼 수도 있습니다.
+`synchronized` 키워드를 사용하는 대신에 Concurrency API 에서 지원하는 다양한 `Lock` 인터페이스를 활용할 수 있습니다. Lock 인터페이스에서는 각 시나리오별로 필요한 다양한 메서드를 제공합니다. 암묵적인 모니터락보다는 비용이 비싸다라고 볼 수 있을것 입니다.
 
 ***
 
@@ -152,7 +151,15 @@ Multiple lock implementations are available in the standard JDK which will be de
 
 The class `ReentrantLock` is a mutual exclusion lock with the same basic behavior as the implicit monitors accessed via the `synchronized` keyword but with extended capabilities. As the name suggests this lock implements reentrant characteristics just as implicit monitors.
 
+### ReentrantLock
+
+`ReentrantLock`은 상호배제를 활용한 `Lock`입니다. 이는 `synchronized` 키워드를 사용한 방법과 동일하지만, 확장이 가능하다는 차이점이 존재합니다. 이름에서도 드러나듯이 암묵적인 모니터 락 활용과 마찬가지로 Reentrant한 특성을 가지고 있습니다.
+
+***
+
 Let's see how the above sample looks like using `ReentrantLock`:
+
+앞서 나왔던 락은 `ReentrantLock`을 사용하여 다음과 같이 작성하여 줄 수 있습니다.
 
 	ReentrantLock lock = new ReentrantLock();
 	int count = 0;
@@ -168,7 +175,15 @@ Let's see how the above sample looks like using `ReentrantLock`:
 
 A lock is acquired via `lock()` and released via `unlock()`. It's important to wrap your code into a `try/finally` block to ensure unlocking in case of exceptions. This method is thread-safe just like the synchronized counterpart. If another thread has already acquired the lock subsequent calls to `lock()` pause the current thread until the lock has been unlocked. Only one thread can hold the lock at any given time.
 
+`lock()`메서드를 호출하여 락을 시작하며 `unlock()`메서드를 호출하여 풀수 있습니다. 예외가 발생할 경우를 대비하여 공유자원이 들어간 코드 블록을 `try/finally`로 감싸는 것은 중요합니다. 이 메서드는 앞서 사용했던 `synchronized`와 동일한 기능을 할 수 있습니다. 만약 다른 스레드에서 이미 `lock()`을 호출하였을 경우에는 해당 스레드의 작업이 진행될 때 까지 잠시 작업을 정지합니다. 오직 하나의 스레드만이 락이 사용된 코드에 접근이 가능합니다.
+
+***
+
 Locks support various methods for fine grained control as seen in the next sample:
+
+Lock인터페이스에서는 다음과 같이 다양한 메서드를 지원합니다.
+
+***
 
 	ExecutorService executor = Executors.newFixedThreadPool(2);
 	ReentrantLock lock = new ReentrantLock();
@@ -193,15 +208,28 @@ Locks support various methods for fine grained control as seen in the next sampl
 
 While the first task holds the lock for one second the second task obtains different information about the current state of the lock:
 
+//해석다시 하기.
+첫번째 executor에서는 1초간 락이 걸리기 때문에 대기하므로 두번째 태스크에서는 락의 현재 상태가 변화하게 된다.
+
+***
+
 	Locked: true
 	Held by me: false
 	Lock acquired: false
 
 The method `tryLock()` as an alternative to `lock()` tries to acquire the lock without pausing the current thread. The boolean result must be used to check if the lock has actually been acquired before accessing any shared mutable variables.
 
+메서드 `tryLock()`은 `lock()`의 대체제 입니다. 현재 스레드의 멈춤없이 락을 할 수 있습니다. boolen 결과값을 반드시 활용하여야 합니다. 락이 걸려있는지 확인하기 위해서 어떠한 공유변수이던지.
+
+***
+
 ### ReadWriteLock
 
 The interface `ReadWriteLock` specifies another type of lock maintaining a pair of locks for read and write access. The idea behind read-write locks is that it's usually safe to read mutable variables concurrently as long as nobody is writing to this variable. So the read-lock can be held simultaneously by multiple threads as long as no threads hold the write-lock. This can improve performance and throughput in case that reads are more frequent than writes.
+
+### ReadWriteLock
+
+***
 
 	ExecutorService executor = Executors.newFixedThreadPool(2);
 	Map<String, String> map = new HashMap<>();
