@@ -2,7 +2,7 @@
 
 Welcome to the second part of my Java 8 Concurrency Tutorial out of a series of guides teaching multi-threaded programming in Java 8 with easily understood code examples. In the next 15 min you learn how to synchronize access to mutable shared variables via the synchronized keyword, locks and semaphores.
 
-병렬 프로그래밍 튜토리얼의 두번째 파트에 오신것을 환영합니다. 이 튜토리얼는 자바8을 기반으로 한 예제코드를 통해서 쉬운 이해를 돕는걸 목표로 합니다. 앞으로 15분간 synchronized 키워드, Lock, Semaphore 를 활용하여 공유변수를 안전하게 엑세스할 수 있는 방법을 이야기할 것 입니다.
+병렬 프로그래밍 튜토리얼의 두번째 파트에 오신것을 환영합니다. 이 튜토리얼는 자바8을 기반으로 한 예제코드를 통해서 쉬운 이해를 돕는걸 목표로 합니다. 앞으로 15분간 synchronized 키워드, Lock, Semaphore 를 활용하여 공유변수에 안전하게 엑세스할 수 있는 방법을 이야기할 것 입니다.
 
 ***
 
@@ -25,7 +25,7 @@ The majority of concepts shown in this article also work in older versions of Ja
 
 For simplicity the code samples of this tutorial make use of the two helper methods `sleep(seconds)` and `stop(executor)` as defined [here](https://github.com/winterbe/java8-tutorial/blob/master/src/com/winterbe/java8/samples/concurrent/ConcurrentUtils.java).
 
-앞으로 나올 예제코드를 단순하게 작성할 수 있도록 두개의 메서드 `sleep(seconds)`과 `stop(executor)`을 정의합니다. 이 메서드는 [여기](https://github.com/winterbe/java8-tutorial/blob/master/src/com/winterbe/java8/samples/concurrent/ConcurrentUtils.java)에서 찾아볼 수 있습니다.
+튜토리얼에서 작성할 예제코드에서는 단순함을 위해서 두개의 메서드 `sleep(seconds)`과 `stop(executor)`을 정의합니다. `sleep(seconds)`는 입력되는 초만큼 스레드를 정지합니다. `stop(executor)`는 입력받은 ExecutorService를 정지하는 역할을 합니다. 이 메서드는 [여기](https://github.com/winterbe/java8-tutorial/blob/master/src/com/winterbe/java8/samples/concurrent/ConcurrentUtils.java)에서 찾아볼 수 있습니다.
 
 ***
 
@@ -33,7 +33,7 @@ For simplicity the code samples of this tutorial make use of the two helper meth
 
 In the [previous tutorial](http://winterbe.com/posts/2015/04/30/java8-concurrency-tutorial-synchronized-locks-examples/) we've learned how to execute code in parallel via executor services. When writing such multi-threaded code you have to pay particular attention when accessing shared mutable variables concurrently from multiple threads. Let's just say we want to increment an integer which is accessible simultaneously from multiple threads.
 
-[이전 튜토리얼](http://devsejong.tumblr.com/post/126596600092/자바8-concurrency-튜토리얼-threadexecutor)에서는 Executor Service를 어떻게 만들고 실행하는지에 대해서 이야기하였습니다. 이러한 멀티 스레드에서는 공유 변수에 접근할 때 각별이 주의를 기울여야 합니다. 멀티 스레드를 활용하여 integer값을 동시에 증가시키는 것에 대해서 이야기해 봅시다.
+[이전 튜토리얼](http://devsejong.tumblr.com/post/126596600092/자바8-concurrency-튜토리얼-threadexecutor)에서는 Executor Service를 사용하여 동시성을 어떻게 처리하는지에 대해서 이야기하였습니다. 이러한 멀티 스레드 환경에서 각 스레드가 참조하는 공유 변수에 접근하는 코드를 작성할때에는 각별히 주의를 기울여야 합니다. integer값을 멀티 스레드로 동시에 증가시키는 코드를 예시로 어떠한 문제점이 생기는지에 대해서 자세하게 살펴보도록 합시다.
 
 ***
 
@@ -66,19 +66,19 @@ When calling this method concurrently from multiple threads we're in serious tro
 
 Instead of seeing a constant result count of 10000 the actual result varies with every execution of the above code. The reason is that we share a mutable variable upon different threads without synchronizing the access to this variable which results in a [race condition](http://en.wikipedia.org/wiki/Race_condition).
 
-위의 코드를 실행할 경우 10000이 아니라 매번 다른 값이 출력되는 것을 보게 될 것입니다. 이는 서로 다른 스레드가 공유변수에 동기화되지 않은채로 접근하기 때문입니다. 이러한 상태를 경쟁상태([race condition](https://ko.wikipedia.org/wiki/경쟁_상태))라고 부릅니다.
+위의 코드를 실행할 경우 예상하는 값 10000이 아니라 매번 다른 값이 출력되는 것을 확인할 수 있을 것입니다. 이는 서로 다른 스레드가 공유변수에 동기화되지 않은채로 접근하기 때문입니다. 이러한 현상을 경쟁상태([race condition](https://ko.wikipedia.org/wiki/경쟁_상태))라고 부릅니다.
 
 ***
 
 Three steps have to be performed in order to increment the number: (i) read the current value, (ii) increase this value by one and (iii) write the new value to the variable. If two threads perform these steps in parallel it's possible that both threads perform step 1 simultaneously thus reading the same current value. This results in lost writes so the actual result is lower. In the above sample 35 increments got lost due to concurrent unsynchronized access to count but you may see different results when executing the code by yourself.
 
-위의 코드에서 숫자를 1씩 더하는 로직은 3번의 다음과 같은 과정을 거칩니다. (1)현재의 값을 읽는다. (2)읽은값의 숫자에 1을 더한다. (3)결과를 변수에 설정한다. 두 스레드가 (1)의 과정에서 동시에 읽는 과정에서 같은 값을 가져올 가능성이 있습니다. 그렇기 때문에 실행결과 값으로 10000보다 작은 숫자가 나오는 것입니다. 위 코드에서는 35만큼이 동기화되지 않은 접근 때문에 누락되었습니다.
+위의 코드에서 숫자를 1 증가시키는 로직은 다음과 같이 3번의 과정을 거쳐 진행됩니다. (1)현재의 값을 읽는다. (2)읽은값의 숫자에 1을 더한다. (3)결과를 변수에 설정한다. 위 과정을 거쳐 실행될 경우 두 스레드가 (1)의 과정에서 변수를 동시에 읽어 같은 값을 가져올 가능성이 있습니다. 그렇기 때문에 실제 실행결과 값이 10000보다 작은 숫자가 나오는 것입니다. 위 코드에서는 35만큼이 동기화되지 않은 접근 때문에 누락되었습니다.
 
 ***
 
 Luckily Java supports thread-synchronization since the early days via the `synchronized` keyword. We can utilize synchronized to fix the above race conditions when incrementing the count:
 
-다행스럽게도 자바에서는 `synchronized` 키워드를 지원하여 스레드 환경에서 동기화된 접근이 가능합니다. 1씩 값을 증가시키는 위의 경쟁상태 코드를 고쳐보도록 하겠습니다.
+다행히도 자바 초기버전부터 지원하는  `synchronized` 키워드를 활용하여 스레드 환경에서 동기화된 접근이 가능합니다. 1씩 값을 증가시키는 위의 경쟁상태 코드를 고쳐보도록 하겠습니다.
 
 ***
 
@@ -117,17 +117,16 @@ Internally Java uses a so called [monitor also known as monitor lock](https://do
 
 //내가 이해를 못하고 있음.
 
-자바는 내부적으로 [Monitor(Monitor Lock 이하 모니터)](https://docs.oracle.com/javase/tutorial/essential/concurrency/locksync.html)와 암묵적인 Lock을 동기처리를 위해서 사용합니다. 모니터는 객체와 결합됩니다. 다시 말해서 synchronized 메서드가 호출될 경우 해당 객체의 동일한 모니터을 공유하게 됩니다.
+자바 내부적으로 [Monitor Lock](https://docs.oracle.com/javase/tutorial/essential/concurrency/locksync.html)을 동기처리를 위해서 사용합니다. 또한 위와 같이 `synchronized` 키워드를 활용한 락 방식을 암묵적인 락(Intrinsic lock)이라고 부릅니다. 자바에서는 각 객체마다 모니터가 하나씩 존재합니다. synchronized 메서드가 동시에 호출될 경우 해당 객체의 동일한 모니터를 공유하여 하나의 스레드만 메서드를 사용할 수 있도록 만듭니다.
 
 ***
 
 All implicit monitors implement the reentrant characteristics. Reentrant means that locks are bound to the current thread. A thread can safely acquire the same lock multiple times without running into deadlocks (e.g. a synchronized method calls another synchronized method on the same object).
 
 
-//이건 진짜 해석 못하겠다..
-모든 명시적 모니터락은 Reentrant(재진입가능)한 가능하다는 특성을 가지고 있습니다. Reentrant하다는 것은 현재 스레드에 Lock이 결합되었다라는 뜻입니다. 스레드에서는 동일한 Lock을 데드락에 빠지는 일 없이 안전하게 가져올 수 있습니다. 동일한 객체에서 synchronized메서드는 다른 synchronized 메서드를 부를 수 있습니다.
+//쪼금있다가 다시 해보자.
 
-(역자주 : Reentrant는 재진입이 가능한으로 해석이 가능하지만, 조금 더 많이 사용되는 영어단어를 사용합니다.
+모든 암시적 모니터락은 [Reentrant](https://en.wikipedia.org/wiki/Reentrancy_(computing)) 특성을 가지고 있습니다. Reentrant란 다시 말해서 현재 스레드에 Lock이 결합되었다라는 뜻입니다. 스레드에서는 동일한 Lock을 데드락에 빠지는 일 없이 안전하게 가져올 수 있습니다. 동일한 객체에서 synchronized메서드는 다른 synchronized 메서드를 부를 수 있습니다.
 
 ***
 
