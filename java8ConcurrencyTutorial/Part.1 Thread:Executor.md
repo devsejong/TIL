@@ -6,6 +6,8 @@
 
 이 가이드는 코드를 통해서 자바 8의 [concurrent(이하 병렬) 프로그래밍](https://en.wikipedia.org/wiki/Concurrent_computing)을 쉽게 이해하는 것을 목표로 만들어졌습니다. 자바의 [Concurrency API](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/package-summary.html)를 설명하는 튜토리얼 중 첫 번째 파트이며, 앞으로 15분 정도의 분량으로 thread, task, executor service를 사용하여 비동기를 어떻게 처리하는지에 대해서 이야기 할 것 입니다.
 
+[[MORE]]
+
 - 파트 1: Thread/Executor
 - 파트 2: Synchronization/Lock
 - 파트 3: Atomic Variables/ConcurrentMap
