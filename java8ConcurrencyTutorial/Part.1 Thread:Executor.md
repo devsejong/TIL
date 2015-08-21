@@ -291,4 +291,4 @@ Executor는 여러 개의 `Callable`을 한 번에 실행할 수 있는 `invokeA
 
 위 예제에서는 작업이 종료된 후 다음 작업이 시작되기 전까지 딜레이를 1초로 지정하였습니다. 초기 딜레이는 0이며, 작업은 2초가 걸립니다. 그러므로 위 예제에서는 3초를 주기로 작업이 진행되는 것을 확인할 수 있을 것입니다. 이처럼 `scheduleWithFixedDelay()`는 작업이 얼마만큼 걸릴지 모르는 상황에서 유용하게 사용할 수 있습니다.
 
-이상으로 concurrency 튜토리얼의 첫 번째 파트를 마칩니다. 위의 코드를 스스로 실행해보시는 것을 강력하게 권장합니다. 또한, 예제에 대한 샘플은 [Github](https://github.com/winterbe/java8-tutorial)에서 찾을 수 있습니다. fork와 star를 주는것에 대해서 너무 부담가지지 않으셔도 됩니다.
+이상으로 concurrency 튜토리얼의 첫 번째 파트를 마칩니다. 위의 코드를 스스로 실행해보시는 것을 강력하게 권장합니다. 또한, 예제에 대한 샘플은 [Github](https://github.com/winterbe/java8-tutorial)에서 찾을 수 있습니다. fork와 star는 제한이 없습니다. 
