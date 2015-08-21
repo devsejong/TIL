@@ -1,5 +1,9 @@
 # 자바8 Concurrency 튜토리얼: Synchronize/Lock
 
+이 글은 [Benjamin Winterberg](http://winterbe.com/about/)가 작성한 [Java 8 Concurrency Tutorial](http://winterbe.com/posts/2015/04/30/java8-concurrency-tutorial-synchronized-locks-examples/)을 번역한 글입니다. 저자의 허락을 얻어 번역하여 공개합니다.
+
+***
+
 병렬 프로그래밍 튜토리얼의 두번째 파트에 오신것을 환영합니다. 이 튜토리얼는 자바8을 기반으로 한 예제코드를 통해서 쉬운 이해를 돕는걸 목표로 합니다. 앞으로 15분간 synchronized 키워드, Lock, Semaphore 를 활용하여 공유변수에 안전하게 엑세스할 수 있는 방법을 이야기할 것 입니다.
 
 - 파트 1: [Thread/Executor](http://devsejong.tumblr.com/post/126596600092/자바8-concurrency-튜토리얼-threadexecutor)
