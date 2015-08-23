@@ -6,6 +6,8 @@
 
 병렬 프로그래밍 튜토리얼의 두 번째 파트에 오신 것을 환영합니다. 이 튜토리얼은 자바8을 기반으로 한 예제코드를 통해서 쉬운 이해를 돕는 걸 목표로 합니다. 앞으로 15분간 synchronized 키워드, Lock, Semaphore를 활용하여 공유변수에 안전하게 엑세스할 수 있는 방법을 이야기할 것입니다.
 
+[[MORE]]
+
 - 파트 1: [Thread/Executor](http://devsejong.tumblr.com/post/126596600092/자바8-concurrency-튜토리얼-threadexecutor)
 - 파트 2: Synchronize/Lock
 - 파트 3: Atomic Variables/ConcurrentMap
