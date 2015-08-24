@@ -1,6 +1,10 @@
 # Optional을 활용하여 null 처리하기
 
-자바에서는 메서드를 실행한 뒤 반환값으로 null을 줄 수 있다. 메서드의 실행 결과가 없을 경우에 null을 반환하는 것은 당연해보기이도 하지만, 반대로 이 메서드를 사용할 경우 null이 나올 수 도 있기 때문에 방어적으로 코드를 작성하여야 한다. 아래와 같이 null을 처리하는 로직을 사용하여야 한다.
+자바에서는 메서드를 실행한 뒤 반환값으로 null을 줄 수 있다. 메서드의 실행 결과가 없을 경우에 null을 반환하는 것은 당연한 일이다.
+
+하지만 메서드를 사용할 경우에는 null이 나올 수 도 있기 때문에 방어적으로 코드를 작성하여야 한다. 아래와 같이 null을 처리하는 로직을 사용하여야 한다.
+
+[[MORE]]
   
     public String simpleCalc(int a, int b, Calc calc) {
         Result result = calculatorService.getResult();
@@ -9,6 +13,8 @@
         }
         //do something	
     }
+
+
 
 null을 제대로 처리하지 않았을 경우 코드를 실행할 경우에 `NullPointerException` 에러를 뿜어내는 것을 볼 수 있다.
 
