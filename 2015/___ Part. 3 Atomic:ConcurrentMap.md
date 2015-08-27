@@ -188,7 +188,7 @@ The interface `ConcurrentMap` extends the map interface and defines one of the m
 
 In the next code snippets we use the following sample map to demonstrates those new methods:
 
-다음의 코드 조각은 우리가 앞으로 예제에서 사용할 값들을 정의하였습니다.
+다음의 코드에서 앞으로 예제에서 사용할 값들을 정의하였습니다.
 
 ***
 
@@ -200,25 +200,47 @@ In the next code snippets we use the following sample map to demonstrates those 
 
 The method `forEach()` accepts a lambda expression of type `BiConsumer` with both the key and value of the map passed as parameters. It can be used as a replacement to for-each loops to iterate over the entries of the concurrent map. The iteration is performed sequentially on the current thread.
 
+`forEach()` 메서드는 람다 표현식을 `BiConsumer`타입으로 받을 수 있습니다. 이 functional object는 key/value의 파라미터 형태로 값을 Map에 전달합니다. 이 메서드는 기존의 for-each문을 대체할 수 있습니다. 이 반복문은 현재 스레드에서 순서대로 실행됩니다.
+
+***
+
 
     map.forEach((key, value) -> System.out.printf("%s = %s\n", key, value));
 
 The method `putIfAbsent()` puts a new value into the map only if no value exists for the given key. At least for the `ConcurrentHashMap` implementation of this method is thread-safe just like `put()` so you don't have to synchronize when accessing the map concurrently from different threads:
+
+메서드 `putIfAbsent()`는 map에서 해당 key의 값이 존재하지 않을 경우에만 새 값을 추가합니다. `ConcurrentHashMap`에서는 `put`과 마찬가지로 스레드 세이프한 메서드이므로 여러 스레드에서 동시에 접근하더라도 동기화를 할 필요가 없습니다.
+
+***
 
     String value = map.putIfAbsent("c3", "p1");
     System.out.println(value);    // p0
 
 The method `getOrDefault()` returns the value for the given key. In case no entry exists for this key the passed default value is returned:
 
+메서드 `getOrDefault()`는 해당하는 key에 대한 값을 반환합니다. 만약 key의 값이 존재하지 않을 경우 기본값을 반환합니다.
+
+***
+
     String value = map.getOrDefault("hi", "there");
     System.out.println(value);    // there
 
-The method `replaceAll()` accepts a lambda expression of type `BiFunction`. BiFunctions take two parameters and return a single value. In this case the function is called with the key and the value of each map entry and returns a new value to be assigned for the current key:
+The method `replaceAll()` accepts a lambda expression of type `BiFunction`. `BiFunctions` take two parameters and return a single value. In this case the function is called with the key and the value of each map entry and returns a new value to be assigned for the current key:
+
+//이건 다시.
+
+메서드 `replaceAll()`은 `BiFunction`타입의 람다 표현식을 파라미터로 받습니다. `BiFunctions`클래스의 두 파라미터를 받으며 하나의 값을 리턴합니다. 이 메서드가 호출될 경우 key/value를 활용하여 현재 키값에 새로운 값을 부여할 수 있습니다.
+
+***
 
     map.replaceAll((key, value) -> "r2".equals(key) ? "d3" : value);
     System.out.println(map.get("r2"));    // d3
 
 Instead of replacing all values of the map `compute()` let's us transform a single entry. The method accepts both the key to be computed and a bi-function to specify the transformation of the value.
+
+map의 전체값을 replace하는 대신 `compute()`를 사용할경우 단일값을 변경할 수 있습니다. 이 메서드는 첫번째 파라미터로 key를 입력받으며, 두번째 파라미터로는 값을 변환하는 로직이 들어있는 `BiFunctions`타입을 받습니다.
+
+***
 
     map.compute("foo", (key, value) -> value + value);
     System.out.println(map.get("foo"));   // barbar
