@@ -313,6 +313,12 @@ All of those methods use a common first argument called `parallelismThreshold`. 
 
 The method `forEach()` is capable of iterating over the key-value pairs of the map in parallel. The lambda expression of type `BiConsumer` is called with the key and value of the current iteration step. In order to visualize parallel execution we print the current threads name to the console. Keep in mind that in my case the underlying `ForkJoinPool` uses up to a maximum of three threads.
 
+### ForEach
+
+메서드 `forEach()`를 사용하여 맵 내부의 key-value를 병렬로 순회하며 작업을 할 수 있는 기능을 제공하여줍니다. `BiConsumer`클래스에 선언된 람다표현식이 각 key-value을 활용하여 작업을 수행하게 됩니다. 다음 예제에서는 병렬작업이 수행되는것을 시각화할 목적으로 현재 스래드의 이름을 콘솔에 출력합니다. 제 예제에서는 `ForkJoinPool`의 최댓값이 3이라는 사실을 기억하십시오.
+
+***
+
     map.forEach(1, (key, value) ->
         System.out.printf("key: %s; value: %s; thread: %s\n",
             key, value, Thread.currentThread().getName()));
@@ -325,6 +331,7 @@ The method `forEach()` is capable of iterating over the key-value pairs of the m
 ### Search
 
 The method `search()` accepts a `BiFunction` returning a non-null search result for the current key-value pair or `null` if the current iteration doesn't match the desired search criteria. As soon as a non-null result is returned further processing is suppressed. Keep in mind that `ConcurrentHashMap` is unordered. The search function should not depend on the actual processing order of the map. If multiple entries of the map match the given search function the result may be non-deterministic.
+
 
 ### Search
 
@@ -348,7 +355,7 @@ The method `search()` accepts a `BiFunction` returning a non-null search result 
 
 Here's another example searching solely on the values of the map:
 
-아래는 
+아래는 맵에서 단일 값을 찾는 다른 예제입니다.
 
 ***
 
@@ -372,6 +379,12 @@ Here's another example searching solely on the values of the map:
 
 The method `reduce()` already known from Java 8 Streams accepts two lambda expressions of type `BiFunction`. The first function transforms each key-value pair into a single value of any type. The second function combines all those transformed values into a single result, ignoring any possible `null` values.
 
+### Reduce
+
+`reduce()`메서드에는 람다표현식이 들어간 `BiFunction`타입 두개 를 선언하여 사용합니다. 첫번째 function은 key-value 쌍을 단일 value로 변환시키는 역할을 합니다. 두번째 function은 이 변환된 값을 조합하여 하나의 값으로 변경합니다. null이 발생하는 경우는 이 연산에서 무시됩니다.
+
+***
+
     String result = map.reduce(1,
         (key, value) -> {
             System.out.println("Transform: " + Thread.currentThread().getName());
@@ -394,4 +407,8 @@ The method `reduce()` already known from Java 8 Streams accepts two lambda expre
     // Result: r2=d2, c3=p0, han=solo, foo=bar
 
 I hope you've enjoyed reading the third part of my tutorial series about Java 8 Concurrency. The code samples from this tutorial are `hosted on GitHub` along with many other Java 8 code snippets. You're welcome to fork the repo and try it by your own.
+
+나는 당신이 이 자바8을 활용한 비동기작업의 3번째 파트를 재미있게 읽었길 희망합니다. 여기서 나온 코드샘플은 github를 통해서 확인할 수 있습니다. 직접 포크를 한 뒤 실행해보시길 추천드립니다.
+
+
 
