@@ -247,7 +247,15 @@ map의 전체값을 replace하는 대신 `compute()`를 사용할경우 단일�
 
 In addition to `compute()` two variants exist: `computeIfAbsent()` and `computeIfPresent()`. The functional parameters of these methods only get called if the key is absent or present respectively.
 
+`compute()`와 비슷한 기능을 가진 메서드가 두개 더 존재합니다. `computeIfAbsent()` 는 값이 존재하지 않을 경우에, `computeIfPresent()`는 값이 존재할 경우에 작업이 수행됩니다.
+
+***
+
 Finally, the method `merge()` can be utilized to unify a new value with an existing value in the map. Merge accepts a key, the new value to be merged into the existing entry and a bi-function to specify the merging behavior of both values:
+
+마지막으로 메서드 `merge()`는 기존의 값과 새로운 값을 합쳐 작업을 할 경우에 사용됩니다. merge는 key를 우선 받으며, 새로운 값은 기존의 값과 머지되며 bi-function투 특정한 머지 행동을 두 값에대한
+
+***
 
     map.merge("foo", "boo", (oldVal, newVal) -> newVal + " was " + oldVal);
     System.out.println(map.get("foo"));   // boo was foo
@@ -257,15 +265,31 @@ Finally, the method `merge()` can be utilized to unify a new value with an exist
 
 All those methods above are part of the `ConcurrentMap` interface, thereby available to all implementations of that interface. In addition the most important implementation `ConcurrentHashMap` has been further enhanced with a couple of new methods to perform parallel operations upon the map.
 
+위에서 이야기했던 `ConcurrentMap` 인터페이스의 메서드들은 구현체를 활용하여 사용이 가능합니다. 이중 가장 많이 활용되는 구현체 `ConcurrentHashMap`에서는 병렬작업을 도와주는 메서드들이 추가적으로 더 들어있습니다.
+
+***
+
 Just like parallel streams those methods use a special ForkJoinPool available via `ForkJoinPool.commonPool()` in Java 8. This pool uses a preset parallelism which depends on the number of available cores. Four CPU cores are available on my machine which results in a parallelism of three:
+
+parallel stream과 마찬가지로 이러한 메서드드들은 자바8의 `ForkJoinPool.commonPool()`을 통해 사용할 수 있습니다.병렬처리의 프리셋으로 사용되는 이 스레드풀은 활용가능한 코어의 숫자에 따라서 풀의 크기가 정해집니다. 4개의 CPU코어를 가지고 있는 제 컴퓨터에서는 스레드풀의 크기가 3으로 나오고 있습니다.
+
+***
 
     System.out.println(ForkJoinPool.getCommonPoolParallelism());  // 3
 
 This value can be decreased or increased by setting the following JVM parameter:
 
+이 스레드 풀의 크기는 JVM파라미터값을 추가하여 수정할 수 있습니다.
+
+***
+
     -Djava.util.concurrent.ForkJoinPool.common.parallelism=5
 
 We use the same example map for demonstrating purposes but this time we work upon the concrete implementation `ConcurrentHashMap` instead of the interface `ConcurrentMap`, so we can access all public methods from this class:
+
+위의 예제에서 활용했던 map을 이번에는 내부의 메서드를 활용하기 위해 인터페이스가 아닌 구현체 `ConcurrentHashMap`으로 선언하겠습니다.
+
+***
 
     ConcurrentHashMap<String, String> map = new ConcurrentHashMap<>();
     map.put("foo", "bar");
@@ -275,7 +299,15 @@ We use the same example map for demonstrating purposes but this time we work upo
 
 Java 8 introduces three kinds of parallel operations: `forEach`, `search` and `reduce`. Each of those operations are available in four forms accepting functions with keys, values, entries and key-value pair arguments.
 
+자바8에서 3가지 유형의 병렬처리작업(`forEach`, `search`, `reduce`)이 소개되었습니다. 각각은 파라미터를 받아들이는 4가지 유형(key, value, entry, key-value)이 존재합니다.
+
+***
+
 All of those methods use a common first argument called `parallelismThreshold`. This threshold indicates the minimum collection size when the operation should be executed in parallel. E.g. if you pass a threshold of 500 and the actual size of the map is 499 the operation will be performed sequentially on a single thread. In the next examples we use a threshold of one to always force parallel execution for demonstrating purposes.
+
+이 메서드들은 공통적으로 첫번째 아규먼트로 `parallelismThreshold`를 호출합니다. 이 threshold는 가르킵니다. 최소한의 컬렉션 사이즈를 병렬작업이 실행될 때... 예를들어 threshold가 500으로 설정하였다면 실제 맵의 사이즈는 499이며, 단일 스레드에서 순서대로 실행됩니다. 다음의 예시에서 우리는 threshold를 하나만 설정하여 병렬작업이 항상 실행되도록 설정합니다. 
+
+***
 
 ### ForEach
 
@@ -294,6 +326,12 @@ The method `forEach()` is capable of iterating over the key-value pairs of the m
 
 The method `search()` accepts a `BiFunction` returning a non-null search result for the current key-value pair or `null` if the current iteration doesn't match the desired search criteria. As soon as a non-null result is returned further processing is suppressed. Keep in mind that `ConcurrentHashMap` is unordered. The search function should not depend on the actual processing order of the map. If multiple entries of the map match the given search function the result may be non-deterministic.
 
+### Search
+
+`search()`메서드는 파라미터로 `BiFunction`을 받으며 해당하는 값에 대한 key-value를 반환합니다. 결과가 없을 경우에는 `null`을 반홥합니다. As soon as a non-null result is returned further processing is suppressed. (결과가 나오는 즉시 향후 프로세스는 정지됩니다.??) `ConcurrentHashMap`의 결과는 정렬되지 않는 상태로 나온다는 사실을 기억하십시오. 만약 여러개의 결과가 나올경우에 결과값은 항상 동일하지 않습니다.
+
+***
+
     String result = map.search(1, (key, value) -> {
         System.out.println(Thread.currentThread().getName());
         if ("foo".equals(key)) {
@@ -309,6 +347,10 @@ The method `search()` accepts a `BiFunction` returning a non-null search result 
     // Result: bar
 
 Here's another example searching solely on the values of the map:
+
+아래는 
+
+***
 
     String result = map.searchValues(1, value -> {
         System.out.println(Thread.currentThread().getName());
