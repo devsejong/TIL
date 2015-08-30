@@ -1,6 +1,12 @@
 # 자바8 Concurrency 튜토리얼: Atomic 변수/ConcurrentMap
 
+이 글은 [Benjamin Winterberg](http://winterbe.com/about/)가 작성한 [Java 8 Concurrency Tutorial](http://winterbe.com/posts/2015/04/07/java8-concurrency-tutorial-thread-executor-examples/)을 번역한 글입니다. 저자의 허락을 얻어 번역하여 공개합니다.
+
+***
+
 자바8을 활용한 멀티스레드 프로그래밍 튜토리얼의 3번째 파트에 오신 것을 환영합니다. 이번 튜토리얼은 Concurrency API의 Atomic 변수와 ConcurrentMap에 대해서 함께 알아보도록 합시다. 두 영역 모두 자바 8에서 도입된 람다와 함수형 프로그래밍을 통해서 많은 개선이 이루어졌습니다. 아래에서 설명하는 예제들은 모두 자바8을 기준으로 작성하였습니다.
+
+[[MORE]]
 
 - Part 1: [Thread/Executor](http://devsejong.tumblr.com/post/126596600092/자바8-concurrency-튜토리얼-threadexecutor)
 - Part 2: [Synchronize/Lock](http://devsejong.tumblr.com/post/127226710107/자바8-concurrency-튜토리얼-synchronizelock)
