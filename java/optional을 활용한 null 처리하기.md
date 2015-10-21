@@ -4,7 +4,6 @@
 
 하지만 메서드를 사용할 경우에는 null이 나올 수 도 있기 때문에 방어적으로 코드를 작성하여야 한다. 아래와 같이 null을 처리하는 로직을 사용하여야 한다.
 
-[[MORE]]
   
     public String simpleCalc(int a, int b, Calc calc) {
         Result result = calculatorService.getResult();
