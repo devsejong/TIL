@@ -6,14 +6,23 @@
   <title>test - jsFiddle demo by devsejong</title>
 </head>
 <body>
-  <script src="//code.jquery.com/jquery-2.1.4.min.js"></script>
-  <script type='text/javascript'>
-    $(window).bind("pageshow", function(event) {
-  		if (event.originalEvent.persisted) {
-  			alert("뒤로가기로 접근하였음");
-  			location.reload();
-  		}
-  	});
+<input type="hidden" id="refreshed" value="no">
+<script>
+	(function () {
+		var e = document.getElementById("refreshed");
+		if (e.value == "no") {
+			e.value = "yes";
+		} else {
+			e.value = "no";
+			location.reload();
+		}
+	})();
+
+	window.onpageshow = function(event) {
+		if (event.persisted) {
+			location.reload();
+		}
+	};
 </script>
 
   
