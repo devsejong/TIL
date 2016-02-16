@@ -1,0 +1,303 @@
+= 람다 표현식
+
+== 람다란 무엇인가?
+
+메서드로 전달할 수 있는 익명함수를 단수화한 것이라고 할 수 있다.
+
+====== 람다의 특성
+
+* 익명 : 보통의 메서드와는 달리 이름이 없으므로 익명이라고 표현할 수 있다.
+* 함수 : 람다는 메서드처럼 특정 클래스에 종속되지 않으므로 함수라고 부른다. 하지만 메서드처럼 파라미터 리스트, 바디, 반환형식, 가능한 예외리스트를 포함한다.
+* 전달 : 람다 표현시을 메서드 인수로 전달하거나 변수로 저장할 수 있다.
+* 간결성 : 익명 클래스처럼 많은 자질구레한 코드를 구현할 필요가 없다.
+
+====== 람다의 구성
+
+[source,java]
+(Apple a1, Apple a2) -> a1.getWeight().compareTo(a2.getWeight());
+
+아래와 같이 3부분으로 나눌 수 있다.
+
+* 파라미터 리스트`(Apple a1, Apple a2)`
+* 화살표`->`
+* 람다의 바디`a1.getWeight().compareTo(a2.getWeight())`
+
+
+람다는 아래와 같은 형태로 작성이 가능하다.
+[source,java]
+----
+// 파라미터가 없으며, 반환은 void
+() -> {}
+// 파라미터가 없으며, 42를 반환한다.
+() -> 42
+// 파라미터가 없으며, null이 반환된다.
+() -> null
+// 괄호와 함께 사용할 경우 완전한 자바 문장이 필요하다. "return"과 ";"는 생략 불가능
+() -> { return 42; }
+// 반환값이 없다. 내부 문장만 실행된다.
+() -> { System.gc(); }
+// 한번에 여러 라인을 람다의 바디에 기술가능하다.
+() -> {
+  if (true) return 12;
+  else {
+    int result = 15;
+    for (int i = 1; i < 10; i++)
+      result *= i;
+    return result;
+  }
+}
+// 파라미터는 아래와 같이 작성하여줄 수 있다.
+(int x) -> x+1
+//위의 문장과 동일하다.
+(int x) -> { return x+1; }
+// 파라미터의 타입은 생략가능하다.
+(x) -> x+1
+// 파라미터가 있는 경우 파라미터리스트의 괄호는 생략가능하다.
+x -> x+1
+(String s) -> s.length()
+(Thread t) -> { t.start(); }
+s -> s.length()
+t -> { t.start(); }
+(int x, int y) -> x+y
+(x,y) -> x+y
+----
+
+== 어디에, 어떻게 람다를 사용할까?
+
+하나의 추상메서드를 가지고 있는 인터페이스는 람다로 사용할 수 있으며 이러한 형태를 함수형 인터페이스라고 부른다.
+함수형 인터페이스 내부에 디폴트 메서드를 추가로 정의할 수 있다.
+
+`@FunctionalInterface`
+함수형 언터페이스라는것을 명시적으로 나타내는 어노테이션. 해당 어노테이션을 선언했지만, 실제로 함수형 인터페이스가 아니면 컴파일러가 에러를 발생시킨다.
+
+
+더 나아가기 전에...
+이 책에서는 다음처럼 특수표기법으로 람다를 소개할 예정.
+
+(Apple, Apple) -> int
+Apple 두개를 인자로 받고, return값은 int이다.
+
+() -> void
+빈 인자를 받고, return값은 void
+
+
+== 람다 활용 : 실행어라운드 패턴
+
+파일을 처리하는 과정을 살펴보면
+
+. 파일을 연다
+. 작업을 처리한다.
+. 파일을 닫는다.
+
+와 같은 과정을 거친다. 여기서 작업을 처리하는 과정은 변화하는 대상이지만, 파일을 열고 닫는 과정은 매번 작업을 처리할 때 마다 중복되어 나타나게 된다.
+
+이러한 경우 람다를 사용하여 단순화 시킨다면 아래와 같이 표현하여 줄 수 있다.
+
+[source,java]
+----
+interface BufferedReaderProcess {
+    String process(BufferedReader b) throws IOException;
+}
+
+String processFile(BufferedReaderProcess p) {
+    try {
+        BufferedReader br = new BufferedReader(new FileReader("data.txt"));
+        return p.process(br);
+    } catch (IOException e) {
+        throw new RuntimeException("예외발생", e);
+    }
+}
+
+@Test
+public void runner() {
+    String oneLine = processFile((br) -> br.readLine());
+    String twoLines = processFile((br) -> br.readLine() + br.readLine());
+}
+
+----
+
+== 함수형 인터페이스 사용하기
+
+=== 자바에서 기본적으로 제공하는 함수인터페이스
+
+https://docs.oracle.com/javase/8/docs/api/java/util/function/package-summary.html
+
+====== Predicate
+
+제네릭 형식의 T객체를 인수로 받아 boolean을 반환한다.
+`(T) -> boolean`
+
+T형식의 객체가 조건식이 맞는지 검사한다.
+
+
+[source,java]
+----
+//TBD
+----
+
+defaultMethod 간략하게소개할 것.
+
+====== Consumer
+
+제네릭형식의 T객체를 받아서 void를 반환한다.
+`(T) -> void`
+
+T형식의 객체를 인수로 받아서 어떤 동작을 수행할 때 사용.
+
+[source,java]
+----
+//TBD
+----
+
+====== Function
+
+제네릭형식의 T를 인수로 받아서 제네릭형식의 R객체를 반환한다.
+(T)->R
+
+
+=== 제공함수별 기본형 특화 함수형 인터페이스
+
+참조형(Wrapper Type)을 사용할 경우 메모리사용과 속도면에서 많은 손해를 볼수밖에 없다.
+자바에서는 기본적으로 이러한 기본형일때 사용할 수 있는 함수형 인터페이스를 제공한다.
+
+[options="header", cols="20%,20%,60%"]
+|===
+|함수형 인터페이스|함수 디스크립터|기본형 특화
+|Predict<T>|`T->boolean`|IntPredict, LongPredict, DoublePredict
+|Consumer<T>|`T->void`|IntConsumer, LongConsumer, DoubleConsumer
+|Function<T,R>|`T->R`|IntFunction<R>, IntToDoubleFunction, IntToLongFunction, LongFunction<R>, LongToIntFunction, LongToDoubleFunction, LongToIntFunction, DoubleFunction<R>, ToIntFunction<T>, ToDoubleFunction<T>, ToLongFunction<T>
+|Supplier<T>|`()->T`|BooleanSupplier, IntSupplier, LongSupplier, DoubleSupplier
+|UnaryOperator<T>|`T->T`|IntUnaryOperator, LongUnaryOperator, DoubleUnaryOperator
+|BinaryOperator<L, R>|`(T, T)->T`|IntBinaryOperator, LongBinaryOperator, DoubleBinaryOperator
+|BiPredicate<L, R>|`(L, R)->boolean`|
+|BiConsumer<T, U>|`(T, U)->void`|ObjIntConsumer<T>, ObjLongConsumer<T>, ObjDoubleConsumer<T>
+|BiFunction<T, U, R>|`(T, U)-> R`|ToIntBiFunction<T, U>, ToLongBiFunction<T, U>, ToDoubleBiFunction<T, U>
+|===
+
+== 형식 검사, 형식 추론 제약
+
+`List<Apple> heavierThan150g = inventory.sort((Apple a)-> a.getWeight() > 150)`
+
+1. filter 메서드의 선언을 확인한다.
+2. filter메서드는 두번째 파라미터로 Predicate<Apple> 형식(대상형식)을 기대한다.
+3. Predicate<Apple>은 test라는 한개의 추상 메서드를 정의하는 함수형 인터페이스이다.
+4. test메서드는 Apple을 받아 boolean을 반환하는 함수 디스크립터를 묘사한다.
+5. filter메서드로 전달된 인수는 이와같은 요구사항을 만족해야 한다.
+
+
+== 메서드 레퍼런스
+
+메서드 레퍼런스란 특정 메스드만을 호출하는 람다의 축약형이라고 생각할 수 있다. 메서드명 앞에 구분자(::)를 붙이는 방식으로 메서드 레퍼런스를 활용할 수 있다.
+
+[options="header"]
+|===
+|람다|메서드 레퍼런스 단축 표현
+|`(Apple a) -> a.getWeight()`|`Apple::getWeight`
+|`() -> Thread.currnetThread().dumpStack()`|`Thread.currentThread()::dumpStack`
+|`(str, i) -> str.substring(i)`|String::substring
+|`(String s) -> System.out.println(s)`|System.out::println
+|===
+
+메서드 레퍼런스를 만드는 방법
+
+메서드 레퍼런스는 3가지 유형으로 구분할 수 있다.
+
+. 정적 메서드레퍼런스
+  * 람다 : (args) -> ClassName.staticMethod(args) +
+메서드 레퍼런스 : ClassName::staticMethod
+  * 예를들어 Integer의 parseInt 메서드는 Integer::parseInt로 표현할 수 있다.
+. 다양한 형식의 인스턴스 메서드 레퍼런스
+  * 람다 : (arg0, rest) -> arg0.instanceMethod(rest) +
+메서드 레퍼런스 : ClassName::instanceMethod
+  * 예를들어 String의 length 메서드는 String::length 로 표현할 수 있다.
+. 기존 객체의 인스턴스 메서드 레퍼런스
+  * 람다 : (args) -> expr.instanceMethod(args) +
+메서드 레퍼런스 : expr::instanceMethod
+  * 예를들어 Transaction 객체를 할당받은 expensiveTransaction 지역변수가 있고, Transaction 객체에는 getValue가 있다면, 이를 expensiveTransaction::getValue라고 표현할 수 있다.
+
+====== 생성자 레퍼런스
+생성자도 메서드 레퍼런스를 사용하여 호출할 수 있다.
+
+[source,java]
+----
+//빈생성자 사용
+Supplier<Apple> a = new Supplier<Apple>() {
+    @Override
+    public Apple get() {
+        return new Apple();
+    }
+};
+Supplier<Apple> b = () -> new Apple();
+Supplier<Apple> c = Apple::new;
+----
+
+=== 람다 표현식을 조합할 수 있는 유용한 메서드
+
+====== Comparator 조합하기
+
+[source,java]
+----
+//메서드 레퍼런스를 통한 무게 가져오기
+Comparator<Apple> c = Comparator.comparing(Apple::getWeight);
+
+//역정렬
+Comparator.comparing(Apple::getWeight)
+        .reversed();
+
+//정렬조건 추가
+Comparator.comparing(Apple::getWeight)
+        .reversed()
+        .thenComparing(Apple::getCountry);
+----
+
+====== Predicate 조합하기
+
+[source,java]
+----
+// Predicate 선언하기.
+Predicate<Apple> redApple = (a) -> a.getColor().equals("red");
+
+// predicate 뒤집기.
+Predicate<Apple> notRedApple = redApple.negate();
+
+// red & heavy
+Predicate<Apple> redAndHeavyApple = redApple.and(a -> a.getWeight() > 150);
+----
+
+====== Function 조합하기
+
+
+
+[source, java]
+----
+// Function 조합
+Function<Integer, Integer> f = x -> x + 1;
+Function<Integer, Integer> g = x -> x * 2;
+
+//f를 부른다음 g를 부른다.
+Function<Integer, Integer> h = f.andThen(g);
+
+//6이 출력된다.
+System.out.println(h.apply(2));
+
+// Function 조합
+Function<Integer, Integer> i = x -> x + 1;
+Function<Integer, Integer> j = x -> x * 2;
+
+//j를 먼저 부른다음 i를 부른다.
+Function<Integer, Integer> k = i.compose(j);
+
+// 5가 출력된다.
+System.out.println(k.apply(2));
+----
+
+== 요약
+
+* 람다표현식은 익명함수의 일종이다.
+* 함수형 인터페이스는 하나의 추상메서드만을 정의하는 인터페이스이다.
+* 자바에서는 자주 사용하는 다양한 함수형 인터페이스를 제공한다. Function<T, R>, Predicate<T>, Supplier<T>, Consumer<T>
+* 각 함수형 인터페이스는 박싱동작을 피할 수 있도록 IntPredicate, IntToLongFunction과 같은 기본형 인터페이스도 제공한다.
+* 실행어라운드 패턴을 람다와 활용하면 유연성과 재사용성을 얻을 수 있다.
+* 람다 표현식의 기대형식을 대상 형식이라고 한다.
+* 메서드 레퍼런스를 이용하면 기존의 메서드 구현을 재사용하고 직접 전달할 수 있다.
+* Comparator, Predicate, Function 같은 함수형 인터페이스는 람다 표현식을 조합할 수 있는 다양한 디폴트 메서드를 제공한다.
