@@ -1,0 +1,53 @@
+= 스트림 활용
+
+== 스트림 연산
+
+[source, java]
+----
+List<String> lowCaloricDishesName = menu
+        .parallelStream()
+        .filter(d -> d.getCalories() < 400)
+        .sorted(comparing(Dish::getCalories))
+        .map(Dish::getName)
+        .collect(toList());
+----
+
+====== 중간연산
+
+filter나 sorted는 다른 스트림을 반환하도록 되어있다. 이 연산을 여러개를 조합하여 질의를 만들어낼 수 있다.
+
+====== 최종연산
+
+최종연산은 스트림 파이프라인에서 결과를 도출한다. 보통 최종연산에 의해서 List, Integer, void 등 스트림 이외의 결과가 반환되게 된다.
+
+[options="header", cols="10%,25%,20%,25%,20%"]
+|===
+|연산|형식|반환 형식|사용된 함수형 인터페이스 형식|함수 디스크립터
+
+|filter|중간연산|Stream<T>|Predicate<T>|T -> boolean
+|distinct|중간연산 (상태있는언바운드)|Stream<T>||
+|skip|중간연산 (상태있는바운드)|Stream<T>|Long|
+|limit|중간연산 (상태있는바운드)|Stream<T>|Long|
+|map|중간연산|Stream<R>|Function<T, R>|T -> R
+|flatMap|중간연산|Stream<R>|Function<T, Stream<R>>|T -> Stream<R>
+|sorted|중간연산 (상태있는언바운드)|Stream<T>|Comparator<T>|(T, T) -> int
+|anyMatch|최종연산|boolean|Predicate<T>|T -> boolean
+|noneMatch|최종연산|boolean|Predicate<T>|T -> boolean
+|anyMatch|최종연산|boolean|Predicate<T>|T -> boolean
+|allMatch|최종연산|boolean|Predicate<T>|T -> boolean
+|findAny|최종연산|Optional<T>||
+|findFirst|최종연산|Optional<T>||
+|forEach|최종연산|void|Consumer<T>|T -> void
+|Collect|최종연산|R|Collector<T, A, R>|
+|Reduce|최종연산 (상태있는바운드)|Optional<T>|BinaryOperator<T>|(T,T) -> T
+|count|최종연산|long||
+|===
+
+== 필터링과 슬라이싱
+
+특정요소만 선택하거나 잘라내기
+
+[source, java]
+----
+// TODO 예제코드 추가할 것.
+----

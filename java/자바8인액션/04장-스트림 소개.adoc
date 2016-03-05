@@ -6,17 +6,17 @@
 
 [source, java]
 ----
-List<Dish> lowCaloricDishes = new ArrayList<>();
+List&lt;Dish&gt; lowCaloricDishes = new ArrayList&lt;&gt;();
 
 // 칼로리가 400이하인 메뉴만 가지고 온다.
 for (Dish d : menu) {
-    if (d.getCalories() < 400) {
+    if (d.getCalories() &lt; 400) {
         lowCaloricDishes.add(d);
     }
 }
 
 // 칼로리 순으로 정렬한다
-Collections.sort(lowCaloricDishes, new Comparator<Dish>() {
+Collections.sort(lowCaloricDishes, new Comparator&lt;Dish&gt;() {
     @Override
     public int compare(Dish o1, Dish o2) {
         return Integer.compare(o1.getCalories(), o2.getCalories());
@@ -24,7 +24,7 @@ Collections.sort(lowCaloricDishes, new Comparator<Dish>() {
 });
 
 // 요리 이름만 가지고 온다.
-List<String> lowCaloricDishesName = new ArrayList<>();
+List&lt;String&gt; lowCaloricDishesName = new ArrayList&lt;&gt;();
 for(Dish d : lowCaloricDishes){
     lowCaloricDishesName.add(d.getName());
 }
@@ -35,9 +35,9 @@ for(Dish d : lowCaloricDishes){
 
 [source, java]
 ----
-List<String> lowCaloricDishesName = menu
+List&lt;String&gt; lowCaloricDishesName = menu
         .stream()
-        .filter(d->d.getCalories() < 400)
+        .filter(d-&gt;d.getCalories() &lt; 400)
         .sorted(comparing(Dish::getCalories))
         .map(Dish::getName)
         .collect(toList());
@@ -59,9 +59,9 @@ Stream API를 사용함으로써 우리는 다음과 같은 장점을 얻을 수
 
 [source, java]
 ----
-List<String> lowCaloricDishesName = menu
+List&lt;String&gt; lowCaloricDishesName = menu
         .parallelStream()
-        .filter(d->d.getCalories() < 400)
+        .filter(d-&gt;d.getCalories() &lt; 400)
         .sorted(comparing(Dish::getCalories))
         .map(Dish::getName)
         .collect(toList());
@@ -99,20 +99,20 @@ List<String> lowCaloricDishesName = menu
 
 [source, java]
 ----
-List<String> threeHighCaloricDishesName = menu
-        .stream() // <1>
-        .filter(d->d.getCalories() > 300) // <2>
-        .sorted(comparing(Dish::getCalories)) // <3>
-        .map(Dish::getName) // <4>
-        .limit(3) // <5>
-        .collect(toList()); // <6>
+List&lt;String&gt; threeHighCaloricDishesName = menu
+        .stream() // &lt;1&gt;
+        .filter(d-&gt;d.getCalories() &gt; 300) // &lt;2&gt;
+        .sorted(comparing(Dish::getCalories)) // &lt;3&gt;
+        .map(Dish::getName) // &lt;4&gt;
+        .limit(3) // &lt;5&gt;
+        .collect(toList()); // &lt;6&gt;
 ----
-<1> menu에서 스트림을 얻는다. 데이터 소스는 menu이며 연속된 요소를 스트림에 제공한다.
-<2> filter는 람다를 인수로 받아 스트림에서 특정요소를 제외시킨다. 예제에서는 300칼로리 이상의 요리를 선택한다.
-<3> sorted는 입력되는 Comparator를 받아 사용하면 스트림을 정렬할 수 있다. 예제에서는 칼로리를 기준으로 요리를 정렬하였다.
-<4> map을 사용하면 한요소를 다른 요소로 변환하거나 정보를 추출할 수 있다. 예제에서는 각각의 요리명을 추출한다.
-<5> limit는 정해진 개수 이상의 요소가 스트림에 저장되지 않도록 스트림의 크기를 축소한다.
-<6> collect는 스트림을 다른형식으로 변환한다. 예제에서는 스트림을 리스트로 변환했다. 해당 내용은 다음 자료에서 좀 더 자세히 다룬다.
+&lt;1&gt; menu에서 스트림을 얻는다. 데이터 소스는 menu이며 연속된 요소를 스트림에 제공한다.
+&lt;2&gt; filter는 람다를 인수로 받아 스트림에서 특정요소를 제외시킨다. 예제에서는 300칼로리 이상의 요리를 선택한다.
+&lt;3&gt; sorted는 입력되는 Comparator를 받아 사용하면 스트림을 정렬할 수 있다. 예제에서는 칼로리를 기준으로 요리를 정렬하였다.
+&lt;4&gt; map을 사용하면 한요소를 다른 요소로 변환하거나 정보를 추출할 수 있다. 예제에서는 각각의 요리명을 추출한다.
+&lt;5&gt; limit는 정해진 개수 이상의 요소가 스트림에 저장되지 않도록 스트림의 크기를 축소한다.
+&lt;6&gt; collect는 스트림을 다른형식으로 변환한다. 예제에서는 스트림을 리스트로 변환했다. 해당 내용은 다음 자료에서 좀 더 자세히 다룬다.
 
 == 스트림과 컬렉션
 
@@ -126,9 +126,9 @@ List<String> threeHighCaloricDishesName = menu
 
 [source, java]
 ----
-List<String> title = Arrays.asList("Java8", "In", "Action");
+List&lt;String&gt; title = Arrays.asList("Java8", "In", "Action");
 
-Stream<String> s = title.stream();
+Stream&lt;String&gt; s = title.stream();
 //title의 각 단어가 출력된다.
 s.forEach(System.out::println);
 //IllegalStateException이 발생된다. 스트림이 이미 소비되었거나 닫혔기 때문이다.
@@ -141,7 +141,7 @@ s.forEach(System.out::println);
 
 [source, java]
 ----
-List<String> names = new ArrayList<>();
+List&lt;String&gt; names = new ArrayList&lt;&gt;();
 for(Dish d : menu){
     names.add(d.getName());
 }
@@ -149,25 +149,26 @@ for(Dish d : menu){
 
 [source, java]
 ----
-List<String> namesWithStream
+List&lt;String&gt; namesWithStream
         = menu.stream().map(Dish::getName).collect(toList());
 ----
 
 스트림 라이브러리의 내부 반복은 데이터 표현과 하드웨어를 활용한 병렬성 구현을 자동으로 선택한다. 반면 외부 반복을 사용할 경우에는 병렬성을 스스로 직접 처리하여야 한다.
 
+
 == 스트림 연산
 
 [source, java]
 ----
-List<String> lowCaloricDishesName = menu
+List&lt;String&gt; lowCaloricDishesName = menu
         .parallelStream()
-        .filter(d -> d.getCalories() < 400)
+        .filter(d -&gt; d.getCalories() &lt; 400)
         .sorted(comparing(Dish::getCalories))
         .map(Dish::getName)
         .collect(toList());
 ----
 
-앞서 소개했던 위 예제에서 연산은 두 그룹으로 구분할 수 있다.
+위 예제에서 연산은 두 그룹으로 구분할 수 있다.
 
 * filter, map, limit는 서로 연결되어 파이프라인을 형성한다.
 * collect로 파이프라인을 실행한 다음에 닫는다.
