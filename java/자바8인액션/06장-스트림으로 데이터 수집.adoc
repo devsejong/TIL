@@ -1,0 +1,370 @@
+= 스트림으로 데이터 수집
+
+앞선 챕터에서는 중간연산을 통해서 스트림을 다른 스트림으로 변경하는 방법과 결과를 도출해내는 최종연산을 사용하는 방법에 대해서 알아보았다.
+이 챕터에서는 최종연산에서 사용되는 collect에 대해서 조금 더 깊이 알아보도록 한다.
+
+== Collector란
+
+[source, java]
+----
+public List<Transaction> transactions = Arrays.asList(
+        new Transaction(Currency.EUR, 1500.0),
+        new Transaction(Currency.USD, 2300.0),
+        new Transaction(Currency.EUR, 1100.0),
+        new Transaction(Currency.USD, 9900.0),
+        new Transaction(Currency.JPY, 7800.0),
+        new Transaction(Currency.JPY, 6700.0),
+        new Transaction(Currency.EUR, 5600.0)
+    );
+----
+
+____
+위의 거래리스트를 통화별 그룹으로 묶어라.
+____
+라는 요구사항이 있을 경우 기존의 자바코드로는 아래와 같이 작성하였었다.
+
+[source, java]
+----
+// 결과값으로 나올 맵을 선언하고
+Map<Currency, List<Transaction>> transactionsByCurrencies = new HashMap<>();
+// 반복문으로 각 값을 우의 결과맵에 매핑한다.
+for (Transaction transaction : transactions) {
+    // 현재 통화를 가져온 다음
+    Currency currency = transaction.getCurrency();
+    List<Transaction> transactionsForCurrency = transactionsByCurrencies.get(currency);
+    // 결과 맵에 리스트가 없을 경우에는 새롭게 리스트를 추가하여준다.
+    if (transactionsForCurrency == null) {
+        transactionsForCurrency = new ArrayList<>();
+        transactionsByCurrencies.put(currency, transactionsForCurrency);
+    }
+    //결과 리스트에 값을 추가한다.
+    transactionsForCurrency.add(transaction);
+}
+
+System.out.println(transactionsByCurrencies);
+----
+
+위의 자바코드는 자바8로 변경할 경우 아래와 같이 간결하고 깔끔하게 작성하여 줄 수 있다.
+
+[source, java]
+----
+Map<Currency, List<Transaction>> transactionsByCurrencies = transactions
+        .stream()
+        .collect(Collectors.groupingBy(Transaction::getCurrency));
+----
+
+collect에서는 스트림의 각요소를 방문하면서 컬렉터가 작업을 처리하여 최종연산결과가 반환되게 된다.
+collect객체는 Collector인터페이스 형태의 파라미터가 들어가게 되며, 이 인터페이스를 어떻게 구현하는냐에 따라서 연산결과가 달라지게 된다.
+Collectors 유틸리티 클래스는 우리가 자주 사용하는 컬렉터 인터페이스를 쉽게 생성할 수 있는 정적 팩터리 메서드를 제공하여 준다. 위의 예제에서 사용된 groupingBy는 Collectors유틸리티 클래스가 제공해주는 정적메서드이다.
+우선 Coleectors유틸리티 클래스가 제공해주는 메서드를 살펴본 다음, 뒤에서 직접 Colelctor 인터페이스의 구현법에 대해서 알아보도록 하자.
+
+== Collectors 유틸리티 클래스
+
+* 스트림 요소를 하나의 값으로 리듀스하고 요약
+* 요소 그룹화
+* 요소 분할
+
+=== 리듀싱과 요약
+
+각 스트림의 값을 더한 뒤, 하나의 결과값을 반환한다. 스트림에서 최댓값, 최솟값, 평균등의 값이 필요할 경우 사용한다.
+
+==== 스트림값에서 최댓값과 최솟값 검색
+
+`Collectors.maxBy`를 사용하여 최댓값을, `Collectors.minBy`를 사용하여 최솟값을 계산할 수 있다.
+
+[source, java]
+----
+Comparator<Dish> dishCaloriesComparator =
+        Comparator.comparingInt(Dish::getCalories);
+
+Optional<Dish> mostCalorieDish =
+        Dish.menu.stream()
+        .collect(Collectors.maxBy(dishCaloriesComparator));
+----
+
+==== 요약 연산
+
+`Collectors.summingInt`, `Collectors.summingLong`, `Collectors.summingDouble`로 스트림 각 요소들의 합를 구할 수 있다.
+
+[source, java]
+----
+int totalCalories = Dish.menu.stream().collect(Collectors.summingInt(Dish::getCalories));
+----
+
+합 이외에도 평균을 구하는 averageInt와 같은 팩토리 메서드도 제공하며 마찬가지로 Long, Double 타입을 제공한다.
+
+평균과 전체합계를 함께 구해야 되는 경우가 있다. 이 경우에는 `summarizingInt`를 사용하면 갯수, 합계, 평균, 최대최소값을 가져올 수 있다. 역시나 동일하게 Long, Double 타입을 지원한다.
+
+
+[source, java]
+----
+// count=9, sum=4300, min=120, average=477.777778, max=800
+IntSummaryStatistics menuStatistics = Dish.menu.stream().collect(
+        Collectors.summarizingInt(Dish::getCalories)
+);
+----
+
+==== 문자열 연결
+
+컬렉터에 joining 팩토리 메서드를 사용하면 스트림의 각 객체에 toString을 호출하여 하나의 문자열을 반환하게 된다.
+
+[source, java]
+----
+String shortMenu = Dish.menu
+        .stream()
+        .map(Dish::getName)
+        .collect(Collectors.joining(/*구분자*/", "));
+----
+
+
+==== 범용 리듀싱 요약 엔진
+
+Collectors 내부에 정의된 reducing 팩터리 메서드를 사용할 경우 reducing연산의 내부 로직을 직접 정의할 수 있다. 아래는 이전 예제에서 summingInt와 동일하게 모든 칼로리의 합계를 구하는것과 동일한 예제이다.
+
+[source, java]
+----
+int totalCalories = Dish.menu.stream().collect(
+        Collectors.reducing(0, Dish::getCalories, (i, j) -> i + j)
+);
+----
+
+reducing은 3개의 인자를 가진다.
+
+* 첫번째 인수는 리듀싱 연산의 시작값이거나, 스트림에 인수가 없을 경우에는 반환값이다.
+* 두번째 인수는 연산의 대상이 되는 값이 반환되도록 한다.
+* 세번째 인수는 같은 종류의 두 항목을 하나의 값으로 더하는 BinaryOperator이다. 예제에서는 두개의 int가 사용되었다.
+
+다음처럼 reducing은 한개의 인자를 가질수도 있다.
+
+[source, java]
+----
+Optional<Dish> maxCalorieDish = Dish.menu.stream().collect(
+        Collectors.reducing(
+                (d1, d2) -> d1.getCalories() > d2.getCalories() ? d1 : d2
+        )
+);
+----
+
+이 경우 내부에는 BinaryOperator을 사용하며, collect시점에서 사용되는 클래스가 반환값이 되어야 한다. 그리고 시작값이 없으므로, 최종결과값은 Optional형태로 반환된다.
+
+=== 그룹화
+
+`Collectors`에서 제공하는 팩토리 메서드 `groupingBy`를 사용한다면, 각 유형별로 스트림의 요소들을 분류할 수 있다.
+
+아래는 메뉴를 타입별로 분리한 결과이다.
+
+[source, java]
+----
+//{FISH=[prawns, salmon], MEAT=[pork, beef, chicken], OTHER=[french fries, rice, season fruit, pizza]}
+Map<Dish.Type, List<Dish>> dishesByType = Dish.menu.stream()
+        .collect(Collectors.groupingBy(Dish::getType));
+----
+
+`groupingBy`의 두번째 인자로는 다시 Collector를 선언할 수 있다. 기존의 그룹을 사용하여 세부적인 작업이 가능하다. 위의 예제에서 결과를 다시 칼로리별로 정렬이 가능하다.
+
+[source, java]
+----
+//{FISH={NORMAL=[salmon], DIET=[prawns]},
+// MEAT={NORMAL=[beef], FAT=[pork], DIET=[chicken]},
+// OTHER={NORMAL=[french fries, pizza],
+// DIET=[rice, season fruit]}}
+Map<Dish.Type, Map<CaloricLevel, List<Dish>>> dishesByTypeCaloricLevel
+        = Dish.menu.stream().collect(
+        Collectors.groupingBy(
+                Dish::getType,
+                Collectors.groupingBy(dish -> {
+                    if (dish.getCalories() <= 400)
+                        return CaloricLevel.DIET;
+                    else if (dish.getCalories() <= 700)
+                        return CaloricLevel.NORMAL;
+                    else
+                        return CaloricLevel.FAT;
+                })
+        )
+);
+----
+
+두번째 인자에 컬렉터를 사용한다면, 각 그룹별 갯수나, 최댓값같은 정보를 가져올 수 있을것이다.
+아래는 각 요리별 갯수를 반환하는 예제이다.
+
+----
+//{MEAT=3, OTHER=4, FISH=2}
+Map<Dish.Type, Long> countingOfDishes = Dish.menu.stream().collect(
+        Collectors.groupingBy(Dish::getType, Collectors.counting())
+);
+----
+
+요리의 종류를 분류하는 컬렉터로 메뉴에서 가장 높은 칼로리를 가진 요리는 다음과 같이 작성하여 줄 수 있다.
+
+
+[source, java]
+----
+// {MEAT=Optional[pork], OTHER=Optional[pizza], FISH=Optional[salmon]}
+Map<Dish.Type, Optional<Dish>> maxDishes1 = Dish.menu.stream().collect(
+        Collectors.groupingBy(
+                Dish::getType,
+                Collectors.maxBy(Comparator.comparingInt(Dish::getCalories))
+        )
+);
+----
+
+위의 결과는 각 값이 Optional로 반환되기 때문에 실제 값을 가져오기 위해서는 결과값에 `get`을 추가하여야 한다. 이 경우 `Collectors`에 정의된 `collectingAndThen`를 사용하여 기존 컬렉터를 감싼 뒤 컬렉션의 결과값을 수정해 내보낼 수 있다.
+
+[source, java]
+----
+// {MEAT=pork, OTHER=pizza, FISH=salmon}
+Map<Dish.Type, Dish> maxDishes2 = Dish.menu.stream().collect(Collectors.groupingBy(
+        Dish::getType,
+        Collectors.collectingAndThen(
+                Collectors.maxBy(Comparator.comparingInt(Dish::getCalories)),
+                Optional::get
+        )
+));
+----
+
+=== 분할
+
+분할은 프레디케이트를 분류함수로 사용하는 특수한 형태의 그룹화 기능이다.
+
+[source, java]
+----
+// {false=[pork, beef, chicken, prawns, salmon],
+// true=[french fries, rice, season fruit, pizza]}
+Map<Boolean, List<Dish>> partitionedMenu = Dish.menu.stream().collect(
+        Collectors.partitioningBy(Dish::isVegetarian)
+);
+----
+
+두번째 인자로는 `Collector`를 받을 수 있다. `groupingBy`와 마찬가지로 나뉘어진 그룹을 다시 서브그룹으로 나눌 수 있다.
+
+[source, java]
+----
+Map<Boolean, Map<Dish.Type, List<Dish>>> GroupedAndPartitionedDishes = Dish.menu.
+        stream().collect(
+        Collectors.partitioningBy(
+                Dish::isVegetarian,
+                Collectors.groupingBy(Dish::getType)
+        )
+);
+----
+
+
+== Collector 인터페이스
+
+앞선 내용에서 우리는 자바에서 제공하는 `toList`, `groupingBy`등 `Collector`인터페이스를 구현한 많은 컬렉터를 살펴보았다. 지금부터는 `Collector`인터페이스를 직접 구현해보면서 효율적으로 문제를 해결하는 컬렉터를 만드는 방법을 살펴본다.
+
+`Collector`인터페이스는 다음과 같이 정의되어있다.
+
+[source, java]
+----
+public interface Collector<T, A, R> {
+    Supplier<A> supplier();
+
+    BiConsumer<A, T> accumulator();
+
+    BinaryOperator<A> combiner();
+
+    Function<A, R> finisher();
+
+    Set<Characteristics> characteristics();
+}
+----
+
+위의 코드는 다음과 같이 설명할 수 있다.
+
+* T는 수집될 스트림 항목의 제네릭형식이다.
+* A는 누적자, 즉 수집과정에서 중간결과를 누적하는 객체의 형태이다.
+* R은 수집연산 결과 객체의 형식이다.
+
+지금부터 스트림의 결과값을 List로 내어놓는 코드를 기준으로 클래스의 형태와 메서드를 살펴보도록 하자.
+
+`Stream<T>`의 모든 요소를 `List<T>로 수집하는 `ToListCollector<T>`라는 클래스를 구현한다면 다음과 같이 나타낼수 있을 것이다.
+
+[source, java]
+----
+public class ToListCollector<T> implements Collector<T, List<T>, List<T>>
+----
+
+인터페이스 `Collector`에 정의된 다섯개의 메서드는 아래와 같은 역할을 한다.
+
+*supplier 메서드: 새로운 결과 컨테이너 만들기*
+
+누적자 인스턴스를 만들어준다. `Coleltor`가 실행되는 순간 결과값들이 모이는 지점이다. `ToListCollector`에서는 다음과 같이 supplier를 정의할 수 있다.
+
+[source, java]
+----
+@Override
+public Supplier<List<T>> supplier() {
+    //생성자레퍼런스를 사용하여 ArrayList::new 도 동일한 결과를 보낸다.
+    return () -> new ArrayList<T>();
+}
+----
+
+*accumulator 메서드 : 결과 컨테이너에 요소 추가하기*
+
+accumulator메서드는 리듀싱 연산을 수행하는 함수를 반환한다. 누적자와 n번째 요소가 람다의 인자로 들어가며, 연산을 통해서 누적자의 값을 수정해나간다.
+
+`ToListCollector`에서는 다음과 같이 supplier를 정의할 수 있다. 누적자인 list에 n번째 데이터 item을 추가시킨다.
+
+[source, java]
+----
+@Override
+public BiConsumer<List<T>, T> accumulator() {
+    return (list, item) -> list.add(item);
+}
+----
+
+*finisher 메서드 : 최종 변환값을 결과 컨테이너에 적용하기*
+
+스트림 탐색을 끝내고, 누적자 개게를 최종결과로 변환하면서 누적과정을 끝낼때 호출할 함수를 반환하여야 한다.
+
+`ToListCollector`에서는 변환과정없이 그대로 누적자로 사용된 List를 반환하면 되므로 아래와 같이 `finisher`메서드를 구현해 줄 수 있다. `Function.identity`는 입력된 값을 그대로 반환하는 static 메서드이다.
+
+[source, java]
+----
+@Override
+public Function<List<T>, List<T>> finisher() {
+    return Function.identity();
+}
+----
+
+*combiner메서드:두 결과 컨테이너의 병합*
+
+combiner는 스트림의 서로 다른 서브파트를 병렬로 처리할 때 누적자가 이 결과를 어떻게 처리할지를 정의한다.
+
+`ToListCollector`에서는 병렬로 리스트가 만들어지므로 다음과 같이 처리하여 병합과정을 만들어주면 된다.
+
+[source, java]
+----
+@Override
+public BinaryOperator<List<T>> combiner() {
+    return (list1, list2) -> {
+        list1.addAll(list2);
+        return list1;
+    };
+}
+----
+
+*Characteristics 메서드*
+
+Characteristics 메서드는 컬렉터의 연산에 대한 속성값을 지정하여줄 수 있으며, 스트림을 어떻게 처리할지에 대한 힌트를 제공하여 준다.
+
+UNORDERED:: 리듀싱 결과는 스트림 요소의 방문순서나 누적순서에 영향을 받지 않는다.
+
+CONCURRENT:: 다중스레드에서 accumulator를 동시에 호출할 수 있으며, 이 컬렉터는 스트림의 병렬 리듀싱을 수행할 수 있다.
+
+IDENTITY_FINISH:: finisher 메서드가 반환하는 함수는 단순히 identity를 적용할 뿐이므로 이를 생략한다. 따라서 리듀싱과정의 최종 결과로 누적자 객체를 바로 사용할 수 있다. 또한 누적자A를 결과 R로 안전하게 형변환할 수 있다.
+
+`ToListCollector`는 스트림의 요소를 누적하는데 사용한 리스트가 최종 결과이므로 추가변환이 필요없다. 따라서 IDENTITY_FINISH를 적용할 수 있다. 리스트의 순서는 보장되어야 하므로 ORDERED는 사용할 수 없다. 위의 코드는 threadsafe하므로 CONCURRENT이다. 요소의 순서가 보장되어야 하므로 병렬로는 실행이 쉽지 않은 코드이다.
+
+`ToListCollector`의 characteristics 아래와 같이 정의하여 줄 수 있다.
+
+[source, java]
+----
+@Override
+public Set<Characteristics> characteristics() {
+    return Collections.unmodifiableSet(
+            EnumSet.of(Characteristics.IDENTITY_FINISH, Characteristics.CONCURRENT)
+    );
+}
+----
