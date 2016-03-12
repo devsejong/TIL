@@ -1,0 +1,237 @@
+= 병렬 데이터 처리와 성능
+
+이번 챕터에서는 스트림으로 데이터 컬렉션 관련 동작을 얼마나 쉽게 병렬로 실행할 수 있는지에 대해서 이야기하며, 이런 병렬처리 내부에 숨어있는 병렬처리방법인 포크/조인 프레임워크에 대해서 알아볼 예정이다. 병렬 스트림에 내부적으로 어떻게 실행되는지 알아야지만, 스트림을 잘못 사용하는 상황을 피할 수 있다.
+
+또한 병렬로 처리하기 위해 한벌의 데이터를 여러청크로 분할하는 방법을 설명할 예정이다.
+
+== 병렬 스트림
+
+컬렉션에서 parallelStream을 호출하기만 하면 병렬 스트림이 생성된다. 병렬스트림이란 각각의 스레드에서 처리할 수 있도록 스트림 요소를 여러 청크로 분할한 스트림이다. 따라서 병렬스트림을 이용하면 모든 멀티코어 프로세서가 각각의 청크를 처리하도록 할당할 수 있다.
+
+[source, java]
+----
+public static long parallelSum(long n) {
+    return Stream.iterate(1L, i -> i + 1)
+            .limit(n)
+            .parallel()
+            .reduce(0L, Long::sum);
+}
+----
+
+순차 스트림에서 위와 같이 `parallel`을 추가할 경우 리듀싱 연산을 여러 청크에 병렬로 수행할 수 있다.
+
+일반적으로 스트림을 사용하면, 순차나 반복에 비해서 성능이 더 좋아질 것이라고 추측할 수 있다. 하지만 실제로 측정을 해본다면 그렇지 않다.
+
+아래와 같이 성능측정 코드를 만든다음, 숫자를 소수와 비소수로 분할하는 컬렉터의 성능을 비교해보도록 하자.
+
+[source, java]
+----
+public static <T, R> long measurePerf(Function<T, R> f, T input) {
+    long fastest = Long.MAX_VALUE;
+    for (int i = 0; i < 10; i++) {
+        long start = System.nanoTime();
+        R result = f.apply(input);
+        long duration = (System.nanoTime() - start) / 1_000_000;
+        System.out.println("Result: " + result);
+        if (duration < fastest) fastest = duration;
+    }
+    return fastest;
+}
+----
+
+[source, java]
+----
+public static long sequentialSum(long n) {
+    return Stream.iterate(1L, i -> i + 1).limit(n).reduce(Long::sum).get();
+}
+
+// Sequential Sum done in: 101 msecs
+System.out.println("Sequential Sum done in: " + measurePerf(ParallelStreams::sequentialSum, 10_000_000L) + " msecs");
+----
+
+[source, java]
+----
+public static long iterativeSum(long n) {
+    long result = 0;
+    for (long i = 0; i <= n; i++) {
+        result += i;
+    }
+    return result;
+}
+
+// Iterative Sum done in: 3 msecs
+System.out.println("Iterative Sum done in: " + measurePerf(ParallelStreams::iterativeSum, 10_000_000L) + " msecs");
+----
+
+고전적인 for-loop를 사용한 방식이 lambda를 사용한 방식보다 성능이 더 좋다는 것을 기억하자.
+
+
+[source, java]
+----
+public static long parallelSum(long n) {
+    return Stream.iterate(1L, i -> i + 1).limit(n).parallel().reduce(Long::sum).get();
+}
+
+// Parallel forkJoinSum done in: 124 msecs
+System.out.println("Iterative Sum done in: " + measurePerf(ParallelStreams::iterativeSum, 10_000_000L) + " msecs");
+----
+
+병렬버전이 오히려 순차코드보다 더 느리게 동작한다. 이는 다음과 같은 이유때문이다.
+
+* iterate가 박싱된 객체를 생성하므로 이를 다시 언박싱하는 과정이 필요하다.
+* iterate는 병렬로 실행될 수 있도록 독립적인 청크로 분할하기는 어렵다.
+
+리듀싱 연산 시작시점에서 전체 숫자 리스트가 준비되지 않았으므로 스트림을 병렬로 처리할 수 있도록 청크를 분할할 수 없다. 병렬처리를 하도록 코드를 작성하였지만, 결국 순차처리와 다름없으며, 스레드를 할당하는 오버헤드만 증가하게 된것이다.
+
+멀티코어를 적극적으로 활용하기 위해서는 병렬연산에 특화된 메서드를 적극적으로 활용하여야지만 성능을 높일 수 있다.
+
+* `LongStream.rangeClosed`는 기본형 long을 직접 사용하므로 박싱과 언박싱 오버헤드가 사라진다.
+* `LongStream.rangeClosed`는 쉽게 청크를 분할할 수 있는 숫자 범위를 생산해낸다.
+
+[source, java]
+----
+public static long rangedSum(long n) {
+    return LongStream.rangeClosed(1, n).reduce(Long::sum).getAsLong();
+}
+
+// Range forkJoinSum done in: 10 msecs
+System.out.println("Range forkJoinSum done in: " + measurePerf(ParallelStreams::rangedSum, 10_000_000L) + " msecs");
+----
+
+여기에 parallel을 사용해준다면 아래와 같이 기존의 for문 보다 빠른 결과를 얻을 수 있다.
+
+[source, java]
+----
+public static long parallelRangedSum(long n) {
+    return LongStream.rangeClosed(1, n).parallel().reduce(Long::sum).getAsLong();
+}
+
+// Parallel range forkJoinSum done in: 2 msecs
+System.out.println("Parallel range forkJoinSum done in: " + measurePerf(ParallelStreams::parallelRangedSum, 10_000_000L) + " msecs" );
+----
+
+병렬화는 분명히 비용이 많이 든다는것을 기억하도록 하자. 병렬화를 이용하기 위해서는 스트림을 재귀적으로 분할해야 하고, 각 서브스트림을 서로 다른 스레드의 리듀싱 연산으로 할당하고, 이들의 결과를 하나의 값으로 합쳐햐 한다. 따라서 코어단에 데이터 전송시간보다 훨씬 오래 걸리는 작업에 대해서만 병렬로 다른 코어에서 수행하는 것이 옳바르다.
+
+병렬 스트림을 효과적으로 사용하기 위해서 다음을 기억하도록 하자
+
+* 확신이 서지 않는다면 직접 측정하라. 병렬스트림은 항상 순차스트림보다 빠르지 않다.
+* 박싱을 주의하라. 자동박싱과 언박싱과정은 성능을 크게 저하시킨다. 이 경우 자바에서 제공하는 기본형 특화 스트림을 사용하는 것이 좋다.
+* 순차스트림보다 병렬스트림에서 성능이 떨어지는 연산이 존재한다. limit나 findFirst 처럼 요소의 순서에 의존하는 연산을 병렬 스트림에서 수행하려면 비싼 비용이 필요하다.
+* 소량의 데이터라면 병렬스트림이 도움되지는 않는다. 소량의 데이터를 처리하는 과정에서 병렬화과정에서 생기는 부가비용을 상쇄할 수 있을만큼 이득을 얻지 못하기 때문이다.
+* 스트림을 구성하는 자료구조가 적절한지 확인하여라. ArrayList는 LinkedList보다 효율적으로 분리가 가능하다.
+* 스트림의 특성과 파이프라인의 중간연산이 스트림의 특성을 어떻게 바꾸느냐에 따라서 분해과정의 성능이 달라질 수 있다. 필터연산이 있을 경우 크기를 예측할 수 없으므로 효과적인 스트림 처리가 쉽지 않다.
+* 최종연산과정에서 병합비용을 살펴보아라. 병합비용이 비싸다면 병렬스트림으로 얻은 성능의 이익이 서브스트림의 부분결과를 합치는 과정에서 상쇄될 수 있다.
+
+== 포크/조인 프레임워크
+
+병렬스트림은 포크/조인 프레임워크를 사용하여 병렬작업을 처리한다. 그렇기 때문에 이에 대한 이해가 없을 경우 병렬처리의 성능이 낮은 프로그램을 작성할수도 있다.
+
+포크/조인 프레임워크는 병렬화할 수 있는 작업을 재귀적으로 작은작업으로 분할한 다음에 서브테스크 각각의 결과를 합쳐서 만들도록 설계되어있다. 작은 단위로 쪼개어 작업을 처리한 다음 각 결과를 합쳐서 최종결과를 내어놓는 형식으로 작업을 처리한다.
+
+pseudocode로 나타낸 알고리즘은 다음과 같다.
+
+[source]
+----
+if(태스크가 충분히 작거나 더이상 분할할 수 없으면){
+    순차적으로 태스크 계산
+} else{
+    태스트를 두 서브 태스크로 분할
+    태스크가 다시 서브 태스크로 분할되도록 이 메서드를 재귀적으로 호출함
+    모든 서브태스크의 연산이 완료될때까지 기다림
+    각 서브태스크의 결과를 합침
+}
+----
+
+아래는 이러한 fork/join 프레임워크를 사용한 최댓값을 찾는 과정이다.
+
+image::http://dev-blog.xoom.com/wp-content/uploads/2014/08/FJ_pic-G.jpg[]
+
+fork/join 프레임워크는 작업훔치기라는 기법을 통해서 유휴CPU가 최대한 없도록 처리한다. 한 스레드의 작업이 종료되었을 경우 다른 스레드에 쌓여있는 큐의 작업을 훔쳐와 태스크를 처리하게 된다. 따라서 태스크의 크기를 작게 나누어야 작업자 스레드간의 작업부하를 비슷한 수준으로 유지할 수 있다.
+
+== Spliterator
+
+자바8에는 `Spliterator`라는 새로운 인터페이스를 제공한다. `Spliterator`란 `분할할 수 있는 반복자`라는 뜻이다. 이 인터페이스는 병렬작업에 특화되어있으며, 구현된 로직에 따라서 스트림의 청크를 분리하게 된다. 자바에서는 기본적으로 모든 자료구조에 디폴트 `Spliterator`를 제공한다.
+
+[source, java]
+----
+public interface Spliterator<T> {
+
+    boolean tryAdvance(Consumer<? super T> action);
+
+    Spliterator<T> trySplit();
+
+    long estimateSize();
+
+    int characteristics();
+}
+----
+
+여기서 T는 `Spliterator`에서 탐색하는 요소의 형식을 가르킨다. tryAdvance 메서드는 `Spliterator`는 순차적으로 요소를 소비하면서 탐색할 요소가 남아있으면 참을 반환한다. trySplit 메서드는 Spliterator의 일부요소를 분할하여 두번째 Spliterator를 생성하는 메서드이다. estimateSize는 제공되는 값이 정확하지 않더라도 제공된 값을 통해서 더 쉽고 공평하게 Spliterator를 분할할 수 있다.
+
+Spliterator 특성
+
+[options="header", cols="30%,70%"]
+|===
+|특성|의미
+|ORDERED|리스트처럼 요소에 정해진 순서가 있으므로 Spliterator는 요소를 탐색하고 분할할 때 이순서에 유의하여야 한다.
+|DISTINCT|x,y 두 요소를 방문했을 때 x.equals(y)는 항상 flase를 반환한다.
+|SORTED|탐색된 요소는 미리 정의된 정렬순서를 따른다.
+|SIZED|크기가 알려진소스로 Spliterator를 생성했으므로, estimatedSize()는 정확한 값을 반환한다.
+|NONULL|탐색하는 모든 요소는 null이 아니다.
+|IMMUTABLE|소스가 불변이다. 추가, 삭제 수정이 불가능하다.
+ONCURRENT|동기화없이 Spliterator의 소스를 여러 스레드에서 동시에 고칠수 있다.
+|SUBSIZED|이 Spliterator 그리고 분할되는 모든 Spliterator는 SIZED특성을 가진다.
+|===
+
+위의 내용을 기반으로 문자열의 단어수를 계산하는 Spliterator를 만들어보면 다음과 같은 형태가 된다.
+
+[source, java]
+----
+private static class WordCounterSpliterator implements Spliterator<Character> {
+
+    private final String string;
+    private int currentChar = 0;
+
+    private WordCounterSpliterator(String string) {
+        this.string = string;
+    }
+
+    @Override
+    public boolean tryAdvance(Consumer<? super Character> action) {
+        action.accept(string.charAt(currentChar++));
+        return currentChar < string.length();
+    }
+
+    @Override
+    public Spliterator<Character> trySplit() {
+        int currentSize = string.length() - currentChar;
+        if (currentSize < 10) {
+            return null;
+        }
+        for (int splitPos = currentSize / 2 + currentChar; splitPos < string.length(); splitPos++) {
+            if (Character.isWhitespace(string.charAt(splitPos))) {
+                Spliterator<Character> spliterator = new WordCounterSpliterator(string.substring(currentChar, splitPos));
+                currentChar = splitPos;
+                return spliterator;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public long estimateSize() {
+        return string.length() - currentChar;
+    }
+
+    @Override
+    public int characteristics() {
+        return ORDERED + SIZED + SUBSIZED + NONNULL + IMMUTABLE;
+    }
+}
+----
+
+작성된 Spliterator는 다음과 같이 사용할 수 있다.
+
+TODO
+
+여기서부터는 조금 있다가 하자!
