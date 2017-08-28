@@ -1,0 +1,7 @@
+# [170828] Today I Learned
+
+주말내내 조짐이 보이던 몸살기운이 온몸에 퍼진상태
+
+Java프로그램에서 GIT 다루기::
+* 현재 프로젝트에서 파일 읽어오는 기능을 git을 기반으로 처리해달라는 요청을 받음
+* link:https://git-scm.com/book/ko/v2/%EC%95%A0%ED%94%8C%EB%A6%AC%EC%BC%80%EC%9D%B4%EC%85%98%EC%97%90-Git-%EB%84%A3%EA%B8%B0-JGit[jgit]을 활용하도록 하자.
