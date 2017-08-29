@@ -9,3 +9,24 @@
 * `ThreadLocal`을 이용해 해당기능이 처리된다.
 * `RequestContextHolder`는 ThreadLocal을 사용하므로 Thread safe하다고 이야기할 수 있을것이다.
 ** 스프링 5버전에서와 같이 단일 스레드를 사용하는 경우에는 어떻게 동작할지에 대해선 좀 더 살펴보아야 함
+* ThreadLocal을 사용하는것은 일반적인 로직에서 넘겨주지 않은 값을 사용할 수 있는 여지를 남겨주기 때문에 테스트에 대한 어려움이나 직관적인 로직작성에 악영향을 끼칠 가능성이 높다. 그렇기 때문에 프레임워크레벨에서만 사용하도록 하고 일반적인 애플리케이션 레벨에서는 사용을 자제하도록 하자.
+
+## @RequestHeader
+
+[source, java]
+----
+@GetMapping("/common/view-desktop")
+public View redirectToDesktop(
+    @RequestHeader("referer") String referer
+){
+    return null;
+}
+----
+
+* Spring MVC에서 @RequestHeader 어노테이션을 활용하여 request의 header값을 가져올 수 있다.
+
+## 정규표현식
+
+* 정규식은 익히면 잊어먹고, 다시 익히고의 반복.
+* 제대로 알기위해선 반복을 통한 세뇌가 필요할 듯
+* https://regexone.com/ 여기서 공부하자!
