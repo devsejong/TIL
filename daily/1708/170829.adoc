@@ -1,0 +1,11 @@
+# [170829] Today I Learned
+
+쉬고 나서인지 집중력이 어제보단 좋은상태
+
+## Spring RequestContextHolder
+
+* link:https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/web/context/request/RequestContextHolder.html[Spring JavaDoc]
+* `HttpRequest`가 처리되는 동안 필요한 정보들을 저장하고 꺼내쓸수 있다.
+* `ThreadLocal`을 이용해 해당기능이 처리된다.
+* `RequestContextHolder`는 ThreadLocal을 사용하므로 Thread safe하다고 이야기할 수 있을것이다.
+** 스프링 5버전에서와 같이 단일 스레드를 사용하는 경우에는 어떻게 동작할지에 대해선 좀 더 살펴보아야 함
