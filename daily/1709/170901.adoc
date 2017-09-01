@@ -1,0 +1,12 @@
+# [170901] Today I Learned
+
+오픈이 15일 남았다. 힘들다아아아아아!!
+
+## Database Migration
+
+Flyway를 이용하여 데이터베이스 스키마를 관리할 수 있다.
+
+* https://flywaydb.org/
+* 일반적으로 maven을 이용하여 실행. Spring boot를 이용하면 애플리케이션 시작단계에서 migration이 시작된다.
+* SQL파일 순서에 따라 마이그레이션이 수행된다. version문자열을 잘못 설정하면 큰일날지도..
+* JPA의 스키마 관리의 한계점때문에 도입하였지만, mybatis와 같은 DB와도 궁합이 잘 맞을듯
