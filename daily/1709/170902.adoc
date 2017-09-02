@@ -9,3 +9,9 @@
 https://stackoverflow.com/questions/21076590/chrome-dev-tools-is-it-possible-to-keep-open-even-after-window-closes
 
 팝업을 연 다음 크롬 개발자도구 -> 소스 탭 -> 이벤트 리스너 -> window.close 를 체크해놓으면 팝업이 닫기는 이벤트가 발생하는 순간에 스크립트 동작이 멈추기 때문에 디버깅이 가능하다.
+
+## 맥 키보드에서 "`"를 누르면 "₩"가 출력된다!!
+
+언제부터 바뀌였는지 모르겠지만, asciidoc이나 markdown 을 쓸때마다 불편한가득. 말도없이 왜 자꾸 이런기능을 추가하는지 모르겠다. 부들부들
+
+link:https://ani2life.com/wp/?p=1753[] 해당 링크에서 키 바인딩을 바꾸는 방법에 대해서 설명해 놓았다.
