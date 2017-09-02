@@ -1,0 +1,11 @@
+# [170902] Today I Learned
+
+주말 출근. 그리고 낮잠으로 올리는시간은 늦었지만... 그래도 24:10분에 올리는 TIL :)
+
+## 크롬 팝업창 디버깅하기
+
+팝업창이 닫히는 경우 개발자도구도 같이 닫힌다. Preserve log를 선택해놓아도 개발자도구가 닫혀서 쓸수 없어서 피들러같은 도구로 요청값을 분석하곤 했었는데 스택오버플로우에서 해결책을 찾아서 공유한다.
+
+https://stackoverflow.com/questions/21076590/chrome-dev-tools-is-it-possible-to-keep-open-even-after-window-closes
+
+팝업을 연 다음 크롬 개발자도구 -> 소스 탭 -> 이벤트 리스너 -> window.close 를 체크해놓으면 팝업이 닫기는 이벤트가 발생하는 순간에 스크립트 동작이 멈추기 때문에 디버깅이 가능하다.
