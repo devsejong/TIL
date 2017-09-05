@@ -1,0 +1,13 @@
+# [170904] Today I Learned
+
+하루 하루 즐거운일 만들기 :)
+
+## 오늘 읽은글
+
+* https://harfangk.github.io/2016/10/31/write-code-that-is-easy-to-delete-not-easy-to-extend-ko.html
+
+## JWT
+
+JWT를 쉽게 사용할 수 있도록 구현체가 몇몇 나와있다. 이중 JJWT를 사용하여 로그인시 쿠키를 생성하여 주었다.
+
+* https://github.com/jwtk/jjwt
