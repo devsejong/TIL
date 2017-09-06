@@ -1,0 +1,37 @@
+# [170906] Today I Learned
+
+## 마이그레이션 ID문제
+
+기존 데이터를 마이그레이션하면서 JPA를 이용하여 데이터를 입력하고해주고 있다.
+
+기존 데이터는 ID가 이미 존재하는 상태이고 이 ID를 유지하면서 데이터를 입력하여야 하는 상황이다.
+
+ID가 존재하는 경우 기존 ID를 유지하고 아닌경우에만 시퀀스를 사용하여 처리하여야 한다.
+아래와 같이 SequenceGenerator 를 확장하여 새로운 Generator를 사용하도록 구성하였다.
+
+[source, java]
+----
+public class UseIdOrGenerate extends SequenceStyleGenerator {
+    @Override
+    public Serializable generate(SessionImplementor session, Object obj) throws HibernateException {
+        assertNotNull(obj);
+
+        Serializable id = session
+                .getEntityPersister(null, obj)
+                .getClassMetadata()
+                .getIdentifier(obj, session);
+
+        if (id == null)
+            return super.generate(session, obj);
+        else
+            return id;
+    }
+
+    private void assertNotNull(Object obj) {
+        if (obj == null){
+            throw new HibernateException(new NullPointerException());
+        }
+    }
+}
+----
+
