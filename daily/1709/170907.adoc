@@ -1,0 +1,103 @@
+# [170907] Today I Learned
+
+## Logback Pattern layout
+
+Logback에서 Layout은 ILoggingEvent를 해석하여 문자열로 변환역할을 맡는 인터페이스다. 이중 가장 자주 사용하는 PatternLayout 클래스은 문자열로 ILoggingEvent을 설정할 수 있도록 도와준다.
+개인 프로젝트에서는 `%d{yyyy-MM-dd HH:mm:ss} [%15.15t] -%5p %-40.40logger{39} : %msg%wEx%n` 로 설정해놓았고 아래와 같이 로그가 출력된다.
+
+[source]
+----
+2017-09-07 15:29:06.562  INFO - [  restartedMain] d.s.w.p.DocumentationPluginsBootstrapper : Context refreshed
+2017-09-07 15:29:06.574  INFO - [  restartedMain] d.s.w.p.DocumentationPluginsBootstrapper : Found 1 custom documentation plugin(s)
+2017-09-07 15:29:06.585  INFO - [  restartedMain] s.d.s.w.s.ApiListingReferenceScanner     : Scanning for api listing references
+2017-09-07 15:29:07.161  INFO - [  restartedMain] s.b.c.e.t.TomcatEmbeddedServletContainer : Tomcat started on port(s): 8880 (http)
+----
+
+로그백 사이트에서도 Layout 과 관련된 문서가 잘 정리되어있다. `https://logback.qos.ch/manual/layouts.html`
+
+스프링부트를 사용하면은 색상이 함께 출력되고 있어서 이를 추적해보았다.
+
+스프링부트는 `/org/springframework/boot/logging/logback/base.xml` 을 기준으로 설정되며 이 파일은 다시 `org/springframework/boot/logging/logback/defaults.xml`을 사용하고 있다.
+
+[source, xml]
+----
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+Default logback configuration provided for import, equivalent to the programmatic
+initialization performed by Boot
+-->
+
+<included>
+	<conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter" />
+	<conversionRule conversionWord="wex" converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter" />
+	<conversionRule conversionWord="wEx" converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter" />
+	<property name="CONSOLE_LOG_PATTERN" value="${CONSOLE_LOG_PATTERN:-%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}"/>
+	<property name="FILE_LOG_PATTERN" value="${FILE_LOG_PATTERN:-%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:-%5p} ${PID:- } --- [%t] %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}"/>
+
+	<appender name="DEBUG_LEVEL_REMAPPER" class="org.springframework.boot.logging.logback.LevelRemappingAppender">
+		<destinationLogger>org.springframework.boot</destinationLogger>
+	</appender>
+
+	<logger name="org.apache.catalina.startup.DigesterFactory" level="ERROR"/>
+	<logger name="org.apache.catalina.util.LifecycleBase" level="ERROR"/>
+	<logger name="org.apache.coyote.http11.Http11NioProtocol" level="WARN"/>
+	<logger name="org.apache.sshd.common.util.SecurityUtils" level="WARN"/>
+	<logger name="org.apache.tomcat.util.net.NioSelectorPool" level="WARN"/>
+	<logger name="org.crsh.plugin" level="WARN"/>
+	<logger name="org.crsh.ssh" level="WARN"/>
+	<logger name="org.eclipse.jetty.util.component.AbstractLifeCycle" level="ERROR"/>
+	<logger name="org.hibernate.validator.internal.util.Version" level="WARN"/>
+	<logger name="org.springframework.boot.actuate.autoconfigure.CrshAutoConfiguration" level="WARN"/>
+	<logger name="org.springframework.boot.actuate.endpoint.jmx" additivity="false">
+		<appender-ref ref="DEBUG_LEVEL_REMAPPER"/>
+	</logger>
+	<logger name="org.thymeleaf" additivity="false">
+		<appender-ref ref="DEBUG_LEVEL_REMAPPER"/>
+	</logger>
+</included>
+----
+
+해당 파일을 살펴보면 스프링팀에서도 로깅을 정제하기 위해서 얼마나 정제하였는지를 알 수 있다. 일단 찾고자 한 로깅설정은 `CONSOLE_LOG_PATTERN` 속성에서 찾아볼 수 있다.
+`{magenta}`라는 구문이 정의되어 있다. 이는 해당 로깅과정에서 색상을 지정해주는 기능을 확인할 수 있다. Logback문서에서는 아쉽게도 색상정보지정과 관련된 부분을 찾을 수 없다.
+하지만 Logback의 PatternLayout을 까보면 이부분에 대한 처리가 되어있는 모습을 확인할 수 있다.
+
+[source, java]
+----
+
+public class PatternLayout extends PatternLayoutBase<ILoggingEvent> {
+
+    public static final Map<String, String> defaultConverterMap = new HashMap<String, String>();
+
+    static {
+        defaultConverterMap.putAll(Parser.DEFAULT_COMPOSITE_CONVERTER_MAP);
+
+        defaultConverterMap.put("level", LevelConverter.class.getName());
+        defaultConverterMap.put("le", LevelConverter.class.getName());
+        defaultConverterMap.put("p", LevelConverter.class.getName());
+
+        // ...
+
+        defaultConverterMap.put("black", BlackCompositeConverter.class.getName());
+        defaultConverterMap.put("red", RedCompositeConverter.class.getName());
+        defaultConverterMap.put("green", GreenCompositeConverter.class.getName());
+        defaultConverterMap.put("yellow", YellowCompositeConverter.class.getName());
+        defaultConverterMap.put("blue", BlueCompositeConverter.class.getName());
+        defaultConverterMap.put("magenta", MagentaCompositeConverter.class.getName());
+        defaultConverterMap.put("cyan", CyanCompositeConverter.class.getName());
+
+    }
+
+    // ...
+}
+----
+
+위와같이 변환기 defaultConverterMap 에 우리가 찾던 `{magenta}` 구문이 추가되는 모습을 확인할 수 있다. 더욱 깊이 들어가기엔 너무 지엽적으로 들어가는 것 같아 일단 호기심을 참고 마무리!
+
+
+
+
+
+
+
+
