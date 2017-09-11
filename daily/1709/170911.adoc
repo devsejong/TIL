@@ -1,0 +1,16 @@
+# [170911] Today I Learned
+
+푸욱 퍼져버런 주말. 그리고 다시 일주일 시작!!
+
+
+## Spring integration
+
+지금 진행하는 프로젝트에서는 Spring Integration 프로젝트를 사용하여 큐에 대한 처리를 해나가고 있다. 지금까지 Integration == Queue 라이브러리로 인지하고 있었던것 같다.
+link:https://projects.spring.io/spring-integration/[Spring++Integration 프로젝트페이지]를 우연찮게 보게되었는데, 여러가지 서비스들의 통합을 위한 개념을 가지고 있는거라는것을 뒤늦게 알게되었다.
+
+지금 사용하고 있는 RabbitMQ의 Queue관련 기능들뿐만 아니라 FTP, TCP/UDP, SOAP등등 많은 기능들이 integration에 포함되어있다. 이러한 외부와의 연결고리가 되는 무언가를 제공해 주는것이 이 Integration이라는 이름으로 통용되는 라이브러리들의 역할인듯 하다.
+
+이제는 단일애플리케이션을 찾는게 쉽지 않으며, 하나의 애플리케이션은 다른 애플리케이션과의 메시지를 주고받으면서 기능을 수행하는 경우가 많다.
+Integration은 애플리케이션을 구성할때 전문같은형태부터 Email같은 영역까지 다양하게 외부와 연결되는 지점들에 대해서 추상화하여 처리할 수 있는 영역을 의미하는 듯 하다.
+
+Spring Integration 역시나 기존의 가치인 추상화를 통한 단순함을 추구하면서 수많은 엔드포인트에 대한 접근방법을 제공해주고 있는 프로젝트인듯 하다.
