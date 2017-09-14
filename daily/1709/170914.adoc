@@ -1,0 +1,45 @@
+# [170914] Today I Learned
+
+## 팝업
+
+화면을 중심으로 팝업을 만들기
+
+[source, javascript]
+----
+// 화면의 중심으로 팝업을 호출합니다.
+var openPopup = function (url, title, w, h) {
+    var wLeft = window.screenLeft ? window.screenLeft : window.screenX;
+    var wTop = window.screenTop ? window.screenTop : window.screenY;
+
+    var left = wLeft + (window.innerWidth / 2) - (w / 2);
+    var top = wTop + (window.innerHeight / 2) - (h / 2);
+
+    return window.open(url, title, 'toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width=' + w + ', height=' + h + ', top=' + top + ', left=' + left);
+};
+----
+
+결제시 팝업창은 하나만 존재해야 하는 요건이 있어서 이는 아래와 같이 처리하였다.
+
+[source, javascript]
+----
+
+// 팝업의 상태값을 전역객체로 저장합니다.
+var paymentPopupHolder;
+
+
+var sample = function(){
+    var isPopupClosed = typeof (paymentPopupHolder) == 'undefined' || paymentPopupHolder.closed;
+
+    // 팝업이 존재하지 않는 경우 새롭게 열기
+    if (isPopupClosed) {
+        paymentPopupHolder = openPopup('', 'payment_popup', 650, 650);
+    }
+    // 팝업이 활성화 상태인경우 포커스 처리
+    else {
+        paymentPopupHolder.focus();
+    }
+}
+----
+
+아무래도 팝업보다는 페이지에 레이어로 처리하는게 더 깔끔한 것 같다.
+코드는 더 늘겠지만 팝업이 뒤에 가려지는 경우도 없을꺼라 작업해야 할 경우도 적을것이고..
