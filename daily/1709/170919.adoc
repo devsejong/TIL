@@ -1,0 +1,31 @@
+# [170919] Today I Learned
+
+## Dynamic form
+
+HTML을 사용하는 개발에선 로직 수행 후 서브밋을 통해서 다음 페이지로 정보를 던지는 경우가 많다.
+만약 ajax통신을 이용한뒤에 submit 작업을 수행하기 위해서는 form이 정의되어있어야 한다.
+
+이러한 경우에 매번 form을 생성해주는 작업은 단순반복작업이다. 매번 key와 value를 상황에 따라서 생성해주어야 하기 때문이다.
+아래와 같이 form을 동적으로 생성해주는 로직을 만들어 key-value를 기준으로 form을 생성하고 submit 할 수 있도록 만들어주었다.
+
+[source, javascript]
+----
+var createFormAndSubmit = function (resultData) {
+    var $dynamicForm = jQuery('<form>', {
+        "action": "https://chandol.net",
+        "method": "post"
+    });
+
+    for (var key in resultData) {
+        $dynamicForm.append(jQuery('<input>', {
+            "name": key,
+            "value": resultData[key],
+            "type": "hidden"
+        }));
+    }
+
+    jQuery("body").append($dynamicForm);
+
+    $dynamicForm.submit();
+};
+----
