@@ -1,0 +1,10 @@
+# [171009] Today I Learned
+
+## 스위치의 분류
+
+image::http://freeism.co.kr/tc/attach/1/7162159243.png[]
+
+* L2 : OSI 레이어 2에 속하는 MAC 어드레스를 참조하여 스위칭하는 장비
+* L3 : OSI 레이어 3에 속하는 IP주소를 참조하여 스위칭하는 장비
+* L4 : OSI 레이어 3~4에 속하는 IP 주소 및 TCP/UDP 포트 정보를 참조하여 스위칭하는 장비
+* L7 : OSI 레이어 3~7에 속하는 IP 주소, TCP/UDP 포트 정보 및 패킷 내용까지 참조하여 스위칭함
