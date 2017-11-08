@@ -1,0 +1,14 @@
+= 코드리뷰
+
+`OrderController`::
+* 여기가 시작
+`PlaceOrderService`::
+* 각 행동마다 서비스를 분화시켜놓음
+* 상단의 validation 지점
+`Order`도메인 객체에 대한 이야기::
+* private setter를 이용한 부가작업
+* event를 이용한 외부와 연결고리 제거
+* OrderLine에 Product를 매핑하지 않는 이유
+* Value Object로 묶어 의미 강화하기(Money)
+* setter는 최소한으로 구체적인 메서드명을 활용하기
+* https://jaeyeolshin.github.io/2016-02-06/difference-between-entity-and-value-object
