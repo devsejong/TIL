@@ -1,0 +1,7 @@
+= [171109] Today I Learned
+
+## javascript this 다시 또 이해해보기
+
+자바스크립트의 this는 진짜 거지같음 아랫글로 공부다시 해보도록 하자!
+
+* https://muckycode.blogspot.kr/2015/04/javascript-this.html
