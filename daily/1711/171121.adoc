@@ -1,0 +1,27 @@
+= [171109] Today I Learned
+
+== KOSSCON
+
+
+=== REDIS
+
+HyperLogLog::
+* 유일한 사용자수와 같은 갯수를 구하는데 특화
+** 단 확률적으로 해당 숫자를 가져오므로 정확하진 않음
+* http://d2.naver.com/helloworld/711301
+* 정확도가 비교적 중요하지 않을 경우에 활용할 수 있음 ex) UV
+* 하지만 메모리 사용량은 매우 적고 빠르므로, 추이를 보는데 유용함
+RedisCluster::
+* Line의 경우 잘 사용하고 있음
+* 대용량의 서비스에 대한 분산처리
+GeoHash::
+* 반경내의 검색결과를 빠르게 가져와야 하는 경우에 활용가능
+* redis 특성상 지속적으로 업데이트 되는 정보들에 활용이 가능함
+** 예를들어 우버나 카카오택시
+RedisModule::
+* lua를 사용하여 필요한 기능을 직접 구현할 수 있음
+* 새로운 기능을 직접 구현할 수 있음!!
+* redis는 싱글스레드를 이용하므로, 블록이 걸릴수 있으므로 사용에 유의할 것
+Rebloom::
+* 4.0에서 추가된 자료구조. HyperLogLog와 유사하게 속도가 필요할때
+* https://redislabs.com/blog/rebloom-bloom-filter-datatype-redis
